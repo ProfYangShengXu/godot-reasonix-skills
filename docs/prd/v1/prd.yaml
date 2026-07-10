@@ -1,0 +1,552 @@
+prd:
+  version: 1
+  product_prd: docs/product/godot-reasonix-product-prd.html
+
+  # ─── 模块划分说明 ───
+  # 按「能力边界」拆为 7 个模块，每个模块对应 Agent 可调用的一组 Skill Tool。
+  # M1-M4 是底层原子能力，M5 是组合产物，M6 是 CLI 封装，M7 是文档。
+  #
+  # 依赖方向：高层 → 接口层 ← 低层实现（依赖倒置）
+  #   M5 ─→ M1 M2 M3 M4
+  #   └────→ M6 (测试模板)
+  #   M7 (无代码依赖)
+  #
+  # 2+1 选择：按模块拆 (a)
+  # 理由：每个模块职责单一、边界清晰、可独立测试、可独立复用。
+  #        Agent 可以按需调用 M1 单独创建项目，也可以调用 M5 直接 fork 模板。
+
+  modules:
+    # ── M1: 项目脚手架 ──
+    - id: M1
+      name: Project Scaffolder
+      summary: 创建 Godot 4.x 项目骨架 + project.godot 配置文件 + 默认空场景
+      rationale: >
+        每个 Godot 游戏需要一个合法的项目根目录。
+        本模块确保 project.godot 格式正确、目录结构（scenes/ scripts/ assets/ 等）符合约定。
+        是所有其他模块的前置依赖。
+
+      interfaces:
+        - name: ScaffoldProject
+          description: 在指定路径创建完整的 Godot 项目骨架
+          input:
+            root_path:
+              type: string
+              desc: 目标目录（不存在则创建）
+            project_name:
+              type: string
+              desc: 项目显示名称（写入 project.godot 的 config/name）
+            resolution:
+              type: object
+              desc: "{ width: 1920, height: 1080 }"
+            renderer:
+              type: string
+              desc: '"forward_plus" | "mobile" | "gl_compatibility"'
+              default: forward_plus
+            version:
+              type: string
+              desc: Godot 主版本号，当前仅支持 "4.x"
+              default: "4.x"
+          output:
+            project_root: string
+            error:
+              type: string
+              optional: true
+          side_effects:
+            - 创建目录树（scenes/ scripts/ assets/textures assets/audio assets/fonts）
+            - 写入 project.godot（含 config/name、config/version、渲染器配置）
+            - 写入 default_env.tres（默认环境）
+            - 写入 icon.svg（占位图标）
+
+      acceptance:
+        - id: M1-A1
+          desc: 正常路径 — 创建项目后目录结构完整、project.godot 存在且可被 Godot 识别
+          check: "test -f /tmp/test_project/project.godot && grep -q 'config_version=5' /tmp/test_project/project.godot"
+          layer: U
+        - id: M1-A2
+          desc: 异常路径 — 指定路径已存在非空目录（不含 Godot 项目）→ 返回错误，不覆盖
+          check: "mkdir -p /tmp/test_existing/other.txt && ScaffoldProject('/tmp/test_existing') → error"
+          layer: U
+        - id: M1-A3
+          desc: 边界路径 — 根路径含中文/空格 → 正常创建，场景引用路径正确编码
+          check: "ScaffoldProject('/tmp/我的 游戏/') → project_root 返回正确 utf-8 路径"
+          layer: I
+        - id: M1-A4
+          desc: 完整验证 — 用 godot --headless --import 验证项目配置可加载
+          check: "cd /tmp/test_project && godot --headless --import 2>&1 | grep -q 'load succeeded'"
+          layer: S
+
+      risks:
+        - dimension: 容错
+          desc: 目录已存在且是合法 Godot 项目 → 应复用而非覆盖。需检测 project.godot 存在性
+        - dimension: 安全
+          desc: root_path 不可包含路径穿越（../），需做 path sanitize
+
+      depends_on: []
+
+    # ── M2: 场景生成器 ──
+    - id: M2
+      name: Scene Generator
+      summary: 生成/编辑 .tscn 场景文件，支持 2D 节点树操作
+      rationale: >
+        .tscn 是 Godot 场景的纯文本格式（类 TSON）。
+        本模块负责将结构化描述转化为合法的 .tscn 文件，包括节点树、Transform、
+        Sprite/CollisionShape/Area2D/CharacterBody2D 等常用 2D 节点。
+        不依赖 Godot 编辑器，只操作文本文件。
+
+      interfaces:
+        - name: CreateScene
+          description: 创建新 .tscn 场景文件
+          input:
+            path:
+              type: string
+              desc: 保存路径（如 scenes/Player.tscn）
+            root_node:
+              type: object
+              desc: |
+                {
+                  type: "CharacterBody2D" | "Node2D" | "Area2D" | "StaticBody2D" | "RigidBody2D" | "Node",
+                  name: string,
+                  position?: { x: number, y: number },
+                  properties?: { [key]: any }
+                }
+            children:
+              type: array
+              desc: 子节点列表（同 root_node 结构，递归）
+              optional: true
+          output:
+            scene_path: string
+            error:
+              type: string
+              optional: true
+          side_effects:
+            - 写入 .tscn 文件
+            - 自动生成 uid（Godot 4.x 资源 ID）
+
+        - name: AddNode
+          description: 向已有场景添加子节点
+          input:
+            scene_path: string
+            parent_path: string
+            node:
+              type: object
+              desc: 同上 CreateScene 的节点结构
+          output:
+            added_node_path: string
+            error:
+              type: string
+              optional: true
+
+        - name: RemoveNode
+          description: 从场景中移除节点
+          input:
+            scene_path: string
+            node_path: string
+
+        - name: SetNodeProperty
+          description: 修改场景中某个节点的属性
+          input:
+            scene_path: string
+            node_path: string
+            properties: object
+
+      acceptance:
+        - id: M2-A1
+          desc: 正常路径 — 创建含 CharacterBody2D + Sprite2D + CollisionShape2D 的场景，.tscn 语法合法
+          check: "python3 -c \"import sys; sys.exit(0 if 'node' in open('/tmp/test.tscn').read() else 1)\""
+          layer: U
+        - id: M2-A2
+          desc: 异常路径 — 向不存在的场景 AddNode → 返回显式错误
+          check: "AddNode('nonexistent.tscn', '.', {type:'Node2D',name:'Test'}) → error"
+          layer: U
+        - id: M2-A3
+          desc: 边界路径 — 添加 1000 个子节点 → 性能可接受（< 2s）
+          check: "time (for i in range(1000): AddNode(...)) 2>&1 | grep -E 'real.*[0-2]m'"
+          layer: I
+        - id: M2-A4
+          desc: 完整验证 — 生成场景后 godot --headless 可加载无报错
+          check: "cd /tmp/test_project && godot --headless --check-scene scenes/Test.tscn 2>&1 | grep -qv 'ERROR'"
+          layer: S
+
+      risks:
+        - dimension: 技术债
+          desc: .tscn 格式无官方 schema，需维护节点类型→TSON 映射表，每个 Godot 小版本需更新
+        - dimension: 熔断
+          desc: 超大场景（>500 节点）需分块处理，单次操作超时降级
+
+      depends_on: [M1]
+
+    # ── M3: 脚本管理器 ──
+    - id: M3
+      name: Script Manager
+      summary: 生成 .gd GDScript 文件并挂载到场景节点
+      rationale: >
+        GDScript 是 Godot 的主要脚本语言。模块职责包括：
+        (a) 生成符合 Godot 风格指南的 .gd 文件
+        (b) 在 .tscn 中将脚本资源路径写入节点的 script 属性
+        (c) 建立基础信号连接（signal → handler）
+        与 M2 紧密协作，但接口独立以保持单一职责。
+
+      interfaces:
+        - name: CreateScript
+          description: 创建 .gd 脚本文件
+          input:
+            path:
+              type: string
+              desc: 脚本路径（如 scripts/player.gd）
+            extends:
+              type: string
+              desc: 继承的节点类型（如 "CharacterBody2D"）
+            class_name:
+              type: string
+              desc: 可选全局类名（@tool 脚本用）
+              optional: true
+            functions:
+              type: array
+              desc: |
+                [{ name: "_ready", body: string },
+                 { name: "_process", body: string }]
+            signals:
+              type: array
+              desc: 可选信号定义 [{ name: "hit", args: [{name:"damage", type:"int"}] }]
+              optional: true
+          output:
+            script_path: string
+            error:
+              type: string
+              optional: true
+          side_effects:
+            - 写入 .gd 文件
+
+        - name: AttachScript
+          description: 将脚本挂载到场景节点
+          input:
+            scene_path: string
+            node_path: string
+            script_path: string
+          output:
+            success: bool
+            error:
+              type: string
+              optional: true
+          side_effects:
+            - 修改 .tscn 文件，在目标节点添加 script 属性
+
+        - name: ConnectSignal
+          description: 在场景中建立信号连接
+          input:
+            scene_path: string
+            signal_node_path: string
+            signal_name: string
+            target_node_path: string
+            method_name: string
+          output:
+            success: bool
+            error:
+              type: string
+              optional: true
+          side_effects:
+            - 修改 .tscn 文件，添加 signal 连接段
+
+      acceptance:
+        - id: M3-A1
+          desc: 正常路径 — 创建继承 CharacterBody2D 的脚本，含 _ready 和 _process，语法正确
+          check: "cd /tmp/test_project && godot --headless --script scripts/player.gd 2>&1 | grep -qv 'Parse Error'"
+          layer: U
+        - id: M3-A2
+          desc: 异常路径 — 脚本继承不存在的节点类型 → 显式返回错误
+          check: "CreateScript(extends='NonExistentType') → error"
+          layer: U
+        - id: M3-A3
+          desc: 集成路径 — 创建脚本 + 挂载到场景节点 + 建立信号连接，Godot 项目整体加载无错
+          check: "cd /tmp/test_project && godot --headless --check 2>&1 | grep -qv 'ERROR'"
+          layer: I
+        - id: M3-A4
+          desc: 对抗路径 — 脚本含语法错误 → AttachScript 仍执行但附带警告标记
+          check: "CreateScript(functions=[{name:'_ready', body:'syntax error!!!'}]) → script 创建但 error 非空"
+          layer: U
+
+      risks:
+        - dimension: 安全
+          desc: 用户输入的代码片段不能直接注入，需做 GDScript 语法转义/包裹
+        - dimension: 技术债
+          desc: Godot 4.x GDScript 在 minor 版本间有破坏性变更（如 4.0→4.1 的 @export 变化），需版本感知
+
+      depends_on: [M2]
+
+    # ── M4: 资源解析器 ──
+    - id: M4
+      name: Resource Resolver
+      summary: 管理纹理/音效/字体等资源的导入路径与引用
+      rationale: >
+        Godot 要求所有资源通过 .import 系统引用。
+        用户放置的 .png/.ogg/.ttf 文件需要被 Godot 自动索引。
+        本模块确保文件位于正确的目录（assets/textures/ 等）、
+        资源路径在 .tscn 和 .gd 中引用正确、
+        以及 .import 文件（Godot 4.x 自动生成）不被意外提交。
+
+      interfaces:
+        - name: ImportResource
+          description: 将外部资源复制到项目资产目录，并返回 Godot 可识别的资源路径
+          input:
+            source_path: string
+            dest_type:
+              type: string
+              enum: ["texture", "audio", "font", "shader"]
+            project_root: string
+          output:
+            resource_path: string
+            error:
+              type: string
+              optional: true
+          side_effects:
+            - 复制文件到 assets/<type>/
+            - 触发 Godot 自动导入（文件系统监听）
+
+        - name: ResolvePath
+          description: 将 Godot 资源路径（res://）转为实际文件系统路径，或反之
+          input:
+            path: string
+            direction:
+              type: string
+              enum: ["godot_to_fs", "fs_to_godot"]
+          output:
+            resolved: string
+            error:
+              type: string
+              optional: true
+
+      acceptance:
+        - id: M4-A1
+          desc: 正常路径 — 导入 .png 纹理后 Godot 资源路径正确返回
+          check: "ImportResource('test.png', 'texture', '/tmp/proj') → 'res://assets/textures/test.png'"
+          layer: U
+        - id: M4-A2
+          desc: 异常路径 — 导入不存在的文件 → 返回错误
+          check: "ImportResource('noexist.png', 'texture', '/tmp/proj') → error"
+          layer: U
+        - id: M4-A3
+          desc: 边界路径 — 导入文件名含特殊字符 → 自动 sanitize
+          check: "ImportResource('héllo wörld!.png', 'texture', '/tmp/proj') → 'res://assets/textures/hello_world.png'"
+          layer: I
+
+      risks:
+        - dimension: 容错
+          desc: Godot 4.x 自动生成 .godot/ 和 .import/ 目录，需加入 .gitignore 管理
+        - dimension: 监控
+          desc: 资源文件丢失时应有可检测的空引用标记，避免运行时崩溃
+
+      depends_on: [M1]
+
+    # ── M5: 模板库 ──
+    - id: M5
+      name: Template Library
+      summary: 三个内置 2D 游戏模板（平台跳跃 / 打砖块 / 点击收集），用户可 Fork 修改
+      rationale: >
+        三个完整可运行的迷你游戏项目，覆盖最常用的 2D 游戏类型。
+        用户通过 'fork 模板' 即可获得完整项目，在此基础上修改。
+        是冷启动的核心——用户立刻能看到可运行的游戏。
+
+      interfaces:
+        - name: ListTemplates
+          description: 列出可选模板
+          input: {}
+          output:
+            templates:
+              type: array
+              desc: "[{ id: 'platformer', name: '平台跳跃', desc: '...', complexity: '低' }, ...]"
+
+        - name: ForkTemplate
+          description: 复制模板到指定目录
+          input:
+            template_id: string
+            target_path: string
+            project_name: string
+          output:
+            project_root: string
+            error:
+              type: string
+              optional: true
+          side_effects:
+            - 复制模板项目文件到目标路径
+            - 更新 project.godot 中的项目名
+
+        - name: CustomizeTemplate
+          description: 对已 fork 的模板做结构化修改（改角色颜色、重力参数、初始关卡）
+          input:
+            project_root: string
+            overrides:
+              type: object
+              desc: "{ player_color: '#ff0000', gravity: 980, ... }"
+          output:
+            modified_files:
+              type: array
+            error:
+              type: string
+              optional: true
+
+      acceptance:
+        - id: M5-A1
+          desc: 正常路径 — Fork 平台跳跃模板后，项目结构完整且 godot 可加载运行
+          check: "ForkTemplate('platformer', '/tmp/my_game', 'MyGame') → run godot /tmp/my_game --headless --check"
+          layer: I
+        - id: M5-A2
+          desc: 异常路径 — Fork 到已有项目目录 → 错误提示而非覆盖
+          check: "ForkTemplate('platformer', '/tmp/existing_project') → error"
+          layer: U
+        - id: M5-A3
+          desc: 对抗路径 — 修改模板参数后运行时行为符合预期（如重力修改后跳跃高度变化）
+          check: "CustomizeTemplate(..., {gravity:500}) → 运行时物体会下降更慢（需集成测试对比）"
+          layer: S
+
+      risks:
+        - dimension: 技术债
+          desc: 三个模板需要随 Godot 版本同步更新，否则新版本可能不兼容
+        - dimension: 运维
+          desc: 模板代码需代码审查，保证是"最佳实践"而非"能跑就行"
+
+      depends_on: [M1, M2, M3, M4, M6]
+
+    # ── M6: Godot CLI 桥 ──
+    - id: M6
+      name: Godot CLI Bridge
+      summary: 封装 godot 命令行调用（导出、检查、运行测试）
+      rationale: >
+        Agent 需能直接调用 godot 可执行文件完成：
+        - 语法检查（godot --headless --script）
+        - 项目验证（godot --headless --import）
+        - 导出打包（godot --headless --export）
+        - 运行测试（godot --headless --test）
+        本模块提供统一调用接口，处理路径解析、退出码、超时。
+        不影响业务逻辑，是基础设施层。
+
+      interfaces:
+        - name: RunGodot
+          description: 运行 godot 命令
+          input:
+            project_root: string
+            args:
+              type: array
+              desc: Godot CLI 参数列表
+            timeout_sec:
+              type: int
+              default: 60
+          output:
+            stdout: string
+            stderr: string
+            exit_code: int
+            error:
+              type: string
+              optional: true
+          side_effects:
+            - 调用 godot 进程
+            - 可能触发 Godot 资源导入 / 导出构建
+
+        - name: CheckGodotVersion
+          description: 检测安装的 Godot 版本是否兼容
+          input:
+            godot_path:
+              type: string
+              optional: true
+          output:
+            version: string
+            compatible: bool
+            error:
+              type: string
+              optional: true
+
+      acceptance:
+        - id: M6-A1
+          desc: 正常路径 — 运行 godot --version 返回版本号
+          check: "RunGodot('/tmp/proj', ['--version']) → exit_code 0, stdout 包含 4.x"
+          layer: U
+        - id: M6-A2
+          desc: 异常路径 — Godot 未安装 → 返回可理解的安装指引错误
+          check: "RunGodot('/tmp/proj', ['--version']) 当 godot not found → error 包含 '安装指引'"
+          layer: U
+        - id: M6-A3
+          desc: 超时处理 — godot 进程卡死 → 超时后 kill 并返回 timeout 错误
+          check: "RunGodot('/tmp/proj', ['--headless'], timeout_sec=1) 且 mock 卡住 → exit_code = -1, error = 'timeout'"
+          layer: I
+
+      risks:
+        - dimension: 熔断
+          desc: godot 进程可能卡死（尤其是 --headless 含 --export 时），必须有超时 + SIGKILL 保障
+        - dimension: 安全
+          desc: args 需要 sanitize，防止注入危险参数（如 --path 指向系统目录）
+
+      depends_on: []
+
+    # ── M7: 技能文档及 Playbook ──
+    - id: M7
+      name: Skill Playbook & Documentation
+      summary: Agent 可读的 API 文档 + 自然语言→工具链映射示例
+      rationale: >
+        产品 PRD 定位为"Agent 原生"。文档的目标读者是 AI Agent，
+        而非人类。因此文档需要：
+        (a) 结构化机器可读的 API 说明
+        (b) 自然语言→工具调用链的示例（Few-shot）
+        (c) Scope 边界声明（什么不该让 Agent 做）
+        这是 M1-M6 的使用说明书，无代码依赖。
+
+      interfaces:
+        - name: GetSkillDoc
+          description: 获取技能集的完整文档（Agent 可读）
+          input: {}
+          output:
+            manifest: object
+            desc: 完整技能清单及调用说明
+
+        - name: FindPlaybook
+          description: 根据用户意图查询最匹配的示例 playbook
+          input:
+            intent: string
+          output:
+            playbook: object
+            desc: 匹配的自然语言→工具链示例
+
+        - name: GetScopeBoundary
+          description: 获取本技能集的能力边界（什么不该做）
+          input: {}
+          output:
+            scope:
+              type: object
+              desc: 能力列表 + 能力外声明
+
+      acceptance:
+        - id: M7-A1
+          desc: 正常路径 — GetSkillDoc 返回完整的 M1-M6 接口清单
+          check: "GetSkillDoc() → manifest 包含 M1-M6 所有接口签名"
+          layer: U
+        - id: M7-A2
+          desc: 覆盖验证 — 每个接口都有至少一个 playbook 示例
+          check: "M1-M6 每接口 → FindPlaybook(intent) 返回非空 playbook"
+          layer: U
+        - id: M7-A3
+          desc: 边界声明 — GetScopeBoundary 包含"不做可视化编辑器替代品"等声明
+          check: "GetScopeBoundary() → scope.out_of_scope 包含'可视化编辑器'"
+          layer: U
+
+      risks:
+        - dimension: 运维
+          desc: 文档需随接口变更同步更新，否则 Agent 读到过期文档会出错
+        - dimension: 监控
+          desc: 无（纯文档模块，不影响运行时）
+
+      depends_on: []
+
+  # ── 架构决策记录 ──
+  architecture_decisions:
+    - id: ADR-1
+      title: Agent 不操控 Godot GUI，只操作文件 + CLI
+      context: >
+        Godot 编辑器没有官方的 CLI 远程控制协议（不像 VSCode 有 --reuse-window）。
+        通过 OS 级别的 GUI 自动化（xdotool/AutoIt）过于脆弱且跨平台困难。
+      decision: 所有操作落地为 .tscn / .gd / project.godot 文件写入，辅以 godot --headless 验证。
+      consequences:
+        - 优点：跨平台、可版本控制、可 diff
+        - 缺点：无法操控编辑器中运行的调试会话（如断点调试）
+
+    - id: ADR-2
+      title: 版本锁定 Godot 4.x，不兼容 3.x
+      context: Godot 3.x 与 4.x 的 .tscn 格式、GDScript 语法、API 不兼容。
+      decision: MVP 仅支持 Godot 4.x。检测到 3.x 时提示升级。

@@ -1,0 +1,63 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="1_main1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gnd1"]
+size = Vector2(800, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wal1"]
+size = Vector2(20, 600)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wal2"]
+size = Vector2(20, 600)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cei1"]
+size = Vector2(800, 20)
+
+[node name="Main" type="Node2D"]
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(400, 300)
+current = true
+
+[node name="CenterMarker" type="Polygon2D" parent="."]
+position = Vector2(400, 300)
+polygon = PackedVector2Array(0, 0, 8, 0, 8, 8, 0, 8)
+color = Color(1, 0.5, 0, 0.3)
+
+[node name="Label" type="Label" parent="."]
+position = Vector2(320, 20)
+text = "WASD 移动小人"
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+
+[node name="Ground" type="StaticBody2D" parent="."]
+position = Vector2(400, 580)
+
+[node name="Shape" type="CollisionShape2D" parent="Ground"]
+shape = SubResource("RectangleShape2D_gnd1")
+
+[node name="GroundVisual" type="Polygon2D" parent="Ground"]
+position = Vector2(0, 0)
+polygon = PackedVector2Array(-400, -20, 400, -20, 400, 20, -400, 20)
+color = Color(0.3, 0.3, 0.35, 1)
+
+[node name="LeftWall" type="StaticBody2D" parent="."]
+position = Vector2(10, 300)
+
+[node name="Shape" type="CollisionShape2D" parent="LeftWall"]
+shape = SubResource("RectangleShape2D_wal1")
+
+[node name="RightWall" type="StaticBody2D" parent="."]
+position = Vector2(790, 300)
+
+[node name="Shape" type="CollisionShape2D" parent="RightWall"]
+shape = SubResource("RectangleShape2D_wal2")
+
+[node name="Ceiling" type="StaticBody2D" parent="."]
+position = Vector2(400, 10)
+
+[node name="Shape" type="CollisionShape2D" parent="Ceiling"]
+shape = SubResource("RectangleShape2D_cei1")
+
+[node name="Player" parent="." instance=ExtResource("1_main1")]
+position = Vector2(400, 300)

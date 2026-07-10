@@ -1,0 +1,24 @@
+; Engine configuration file.
+; Godot Reasonix Skills — Platformer Template
+
+[application]
+config/name="Platformer"
+config/description="A simple 2D platformer game template"
+run/main_scene="res://scenes/Main.tscn"
+config/features=PackedStringArray("4.2")
+config/icon="res://icon.svg"
+
+[rendering]
+renderer/rendering_method="forward_plus"
+renderer/rendering_method.mobile="forward_plus"
+
+[display]
+window/size/viewport_width=1152
+window/size/viewport_height=648
+window/size/mode=0
+window/dpi/allow_hidpi=true
+
+[input]
+ui_left=[{"deadzone": 0.5, "events": [{"keycode": 65, "type": 0}, {"keycode": 4194319, "type": 0}]}]
+ui_right=[{"deadzone": 0.5, "events": [{"keycode": 68, "type": 0}, {"keycode": 4194321, "type": 0}]}]
+ui_accept=[{"deadzone": 0.5, "events": [{"keycode": 32, "type": 0}, {"keycode": 4194306, "type": 0}]}]

@@ -1,0 +1,409 @@
+GDScript exported properties &mdash; Godot Engine (stable) documentation in English
+https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_exports.html
+
+<!DOCTYPE html>
+
+GDScript exported properties &mdash; Godot Engine (stable) documentation in English
+
+Godot Engine 4.7 documentation in English
+
+Scripting
+
+GDScript
+
+GDScript exported properties
+
+Edit on GitHub
+
+Learn how to contribute!
+
+GDScript exported properties
+
+In Godot, class members can be exported. This means their value gets saved along
+with the resource (such as the scene) they're
+attached to, and get transferred over when using RPCs.
+They will also be available for editing in the property editor. Exporting is done by using
+the @export annotation.
+
+<span></span><span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">number</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">int</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span>
+
+In that example the value 5 will be saved and visible in the property editor.
+
+An exported variable must be initialized to a constant expression or have a type specifier
+in the variable. Some of the export annotations have a specific type and don't need the variable to be typed (see the
+Examples section below).
+
+One of the fundamental benefits of exporting member variables is to have
+them visible and editable in the editor. This way, artists and game designers
+can modify values that later influence how the program runs. For this, a
+special export syntax is provided. Additionally, documentation comments can be
+used for tooltip descriptions, visible on mouse over.
+
+Note
+
+Exporting properties can also be done in other languages such as C#.
+The syntax varies depending on the language. See C# exported properties
+for information on C# exports.
+
+Basic use
+
+If the exported value assigns a constant or constant expression,
+the type will be inferred and used in the editor.
+
+<span></span><span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">number</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span>
+
+If there's no default value, you can add a type to the variable.
+
+<span></span><span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">number</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">int</span>
+
+Resources and nodes can be exported.
+
+<span></span><span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">resource</span><span class="p">:</span><span class="w"> </span><span class="nb">Resource</span>
+<span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">node</span><span class="p">:</span><span class="w"> </span><span class="nb">Node</span>
+
+Even if a script is not executed in the editor, exported properties
+can still be edited. However, getters and setters will only be used
+if the script is in Tool mode.
+
+Grouping exports
+
+It is possible to group your exported properties inside the Inspector
+with the @export_group
+annotation. Every exported property after this annotation will be added to
+the group. Start a new group or use @export_group("") to break out.
+
+<span></span><span class="nd">@export_group</span><span class="p">(</span><span class="s2">"My Properties"</span><span class="p">)</span>
+<span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">number</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span>
+
+The second argument of the annotation can be used to only group properties
+with the specified prefix.
+
+Groups cannot be nested, use @export_subgroup
+to create subgroups within a group.
+
+<span></span><span class="nd">@export_subgroup</span><span class="p">(</span><span class="s2">"Extra Properties"</span><span class="p">)</span>
+<span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">string</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">""</span>
+<span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">flag</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="l">false</span>
+
+You can also change the name of your main category, or create additional
+categories in the property list with the @export_category
+annotation.
+
+<span></span><span class="nd">@export_category</span><span class="p">(</span><span class="s2">"Main Category"</span><span class="p">)</span>
+<span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">number</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span>
+<span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">string</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">""</span>
+
+<span class="nd">@export_category</span><span class="p">(</span><span class="s2">"Extra Category"</span><span class="p">)</span>
+<span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">flag</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="l">false</span>
+
+Note
+
+The list of properties is organized based on the class inheritance and
+new categories break that expectation. Use them carefully, especially
+when creating projects for public use.
+
+Strings as paths
+
+String as a path to a file. See @export_file.
+
+<span></span><span class="nd">@export_file</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">f</span>
+
+String as a path to a directory. See @export_dir.
+
+<span></span><span class="nd">@export_dir</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">f</span>
+
+String as a path to a file, custom filter provided as hint. See again @export_file.
+
+<span></span><span class="nd">@export_file</span><span class="p">(</span><span class="s2">"*.txt"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">f</span>
+
+Using paths in the global filesystem is also possible,
+but only in scripts in tool mode.
+
+String as a path to a PNG file in the global filesystem. See @export_global_file.
+
+<span></span><span class="nd">@export_global_file</span><span class="p">(</span><span class="s2">"*.png"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">tool_image</span>
+
+String as a path to a directory in the global filesystem. See @export_global_dir.
+
+<span></span><span class="nd">@export_global_dir</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">tool_dir</span>
+
+The multiline annotation tells the editor to show a large input
+field for editing over multiple lines. See @export_multiline.
+
+<span></span><span class="nd">@export_multiline</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">text</span>
+
+Strings as input actions
+
+String as an input action defined in the project's input map.
+
+<span></span><span class="nd">@export_custom</span><span class="p">(</span><span class="n">PROPERTY_HINT_INPUT_NAME</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">my_input</span>
+
+String as an input action defined in the project's input map, plus default
+built-in values such as ui_accept and ui_cancel.
+
+<span></span><span class="nd">@export_custom</span><span class="p">(</span><span class="n">PROPERTY_HINT_INPUT_NAME</span><span class="p">,</span><span class="w"> </span><span class="s2">"show_builtin"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">my_input</span>
+
+String as an input action defined in the project's input map, plus arbitrary
+values that can manually be entered.
+
+<span></span><span class="nd">@export_custom</span><span class="p">(</span><span class="n">PROPERTY_HINT_INPUT_NAME</span><span class="p">,</span><span class="w"> </span><span class="s2">"loose_mode"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">my_input</span>
+
+String as an input action defined in the project's input map, plus default
+built-in values such as ui_accept and ui_cancel and arbitrary values
+that can manually be entered.
+
+<span></span><span class="nd">@export_custom</span><span class="p">(</span><span class="n">PROPERTY_HINT_INPUT_NAME</span><span class="p">,</span><span class="w"> </span><span class="s2">"show_builtin,loose_mode"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">my_input</span>
+
+Limiting editor input ranges
+
+See @export_range for all of the following.
+
+Allow integer values from 0 to 20.
+
+<span></span><span class="nd">@export_range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">i</span>
+
+Allow integer values from -10 to 20.
+
+<span></span><span class="nd">@export_range</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">j</span>
+
+Allow floats from -10 to 20 and snap the value to multiples of 0.2.
+
+<span></span><span class="nd">@export_range</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mf">0.2</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">k</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">float</span>
+
+The limits can be made to affect only the slider if you add the hints "or_less"
+and/or "or_greater". If either these hints are used, it will be possible for
+the user to enter any value or drag the value with the mouse when not using
+the slider, even if outside the specified range.
+
+<span></span><span class="nd">@export_range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s2">"or_less"</span><span class="p">,</span><span class="w"> </span><span class="s2">"or_greater"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">l</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">int</span>
+
+The "exp" hint can be used to make a value have an exponential slider
+instead of a linear slider. This means that when dragging the slider towards
+the right, changes will become progressively faster when dragging the mouse.
+This is useful to make editing values that can be either very small or very large
+easier, at the cost of being less intuitive.
+
+<span></span><span class="nd">@export_range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">100000</span><span class="p">,</span><span class="w"> </span><span class="mf">0.01</span><span class="p">,</span><span class="w"> </span><span class="s2">"exp"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">exponential</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">float</span>
+
+For values that are meant to represent an easing factor, use
+Floats with easing hint instead.
+
+The "hide_slider" hint can be used to hide the horizontal bar that
+appears below float properties, or the up/down arrows that appear besides
+int properties:
+
+<span></span><span class="nd">@export_range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mf">0.01</span><span class="p">,</span><span class="w"> </span><span class="s2">"hide_slider"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">no_slider</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">float</span>
+
+On the other hand, the "prefer_slider" hint can be used to show a horizontal
+bar below int properties instead of up/down arrows:
+
+<span></span><span class="nd">@export_range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s2">"prefer_slider"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">with_slider</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">int</span>
+
+Adding suffixes and handling degrees/radians
+
+A suffix can also be defined to make the value more self-explanatory in the
+inspector. For example, to define a value that is meant to be configured as
+"meters" (m) by the user:
+
+<span></span><span class="nd">@export_range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s2">"suffix:m"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">m</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">int</span>
+
+For angles that are stored in radians but displayed as degrees to the user, use
+the "radians_as_degrees" hint:
+
+<span></span><span class="nd">@export_range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">360</span><span class="p">,</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="s2">"radians_as_degrees"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">angle</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">float</span>
+
+This performs automatic conversion when the value is displayed or modified in
+the inspector and also displays a degree (°) suffix. This approach is used
+by Godot's own rotation properties throughout the editor.
+
+If the angle is stored in degrees instead, use the "degrees" hint to display
+the degree symbol while disabling the automatic degrees-to-radians conversion
+when the value is modified from the inspector.
+
+Linking vector values together
+
+It is possible to link vector values together. When the user adjusts one of the
+vector's components, the other components are automatically adjusted
+proportionally. For example, this is useful to maintain the aspect ratio of a 2D
+sprite when adjusting its scale. This feature can be temporarily disabled by the
+user by clicking the link icon to the right of the property.
+
+<span></span><span class="c1"># Leave the hint string empty if you don't want to add a suffix.</span>
+<span class="nd">@export_custom</span><span class="p">(</span><span class="n">PROPERTY_HINT_LINK</span><span class="p">,</span><span class="w"> </span><span class="s2">"suffix:px"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">vector2_linked</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">Vector2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb nb-Type">Vector2</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span><span class="p">)</span>
+
+Results in:
+
+Linked Vector2i property with the "px" suffix
+
+This hint is effective
+on Vector2, Vector2i, Vector3, Vector3i, Vector4, and Vector4i. It can be used
+at the same time as a property suffix, as seen in the example above.
+
+Floats with easing hint
+
+Display a visual representation of the ease() function
+when editing. See @export_exp_easing.
+
+<span></span><span class="nd">@export_exp_easing</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">transition_speed</span>
+
+Colors
+
+Regular color given as red-green-blue-alpha value.
+
+<span></span><span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">col</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">Color</span>
+
+Color given as red-green-blue value (alpha will always be 1). See @export_color_no_alpha.
+
+<span></span><span class="nd">@export_color_no_alpha</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">col</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">Color</span>
+
+Nodes
+
+Nodes can also be directly exported as properties in a script without
+having to use NodePaths:
+
+<span></span><span class="c1"># Allows any node.</span>
+<span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">node</span><span class="p">:</span><span class="w"> </span><span class="nb">Node</span>
+
+<span class="c1"># Allows any node that inherits from BaseButton.</span>
+<span class="c1"># Custom classes declared with `class_name` can also be used.</span>
+<span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">some_button</span><span class="p">:</span><span class="w"> </span><span class="nb">BaseButton</span>
+
+Exporting NodePaths like in Godot 3.x is still possible, in case you need it:
+
+<span></span><span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">node_path</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">NodePath</span>
+<span class="k">var</span><span class="w"> </span><span class="n">node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">get_node</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+
+If you want to limit the types of nodes for NodePaths, you can use the
+@export_node_path
+annotation:
+
+<span></span><span class="nd">@export_node_path</span><span class="p">(</span><span class="s2">"Button"</span><span class="p">,</span><span class="w"> </span><span class="s2">"TouchScreenButton"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">some_button</span>
+
+Resources
+
+<span></span><span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">resource</span><span class="p">:</span><span class="w"> </span><span class="nb">Resource</span>
+
+In the Inspector, you can then drag and drop a resource file
+from the FileSystem dock into the variable slot.
+
+Opening the inspector dropdown may result in an
+extremely long list of possible classes to create, however.
+Therefore, if you specify an extension of Resource such as:
+
+<span></span><span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">resource</span><span class="p">:</span><span class="w"> </span><span class="nb">AnimationNode</span>
+
+The drop-down menu will be limited to AnimationNode and all
+its derived classes.
+
+Note
+
+Using @export variables for Resource objects
+makes them a dependency of the instance, meaning that all the resources
+referenced by @export variables are loaded when the scene
+containing the script is loaded. If you want to reference a
+Resource object but load it manually when you need
+it (which, for example, is often the case for
+PackedScenes containing a whole level), use
+@export_file or @export_file_path instead.
+
+Exporting bit flags
+
+See @export_flags.
+
+Integers used as bit flags can store multiple true/false (boolean)
+values in one property. By using the @export_flags annotation, they
+can be set from the editor:
+
+<span></span><span class="c1"># Set any of the given flags from the editor.</span>
+<span class="nd">@export_flags</span><span class="p">(</span><span class="s2">"Fire"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Water"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Earth"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Wind"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">spell_elements</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+
+You must provide a string description for each flag. In this example, Fire
+has value 1, Water has value 2, Earth has value 4 and Wind
+corresponds to value 8. Usually, constants should be defined accordingly (e.g.
+const ELEMENT_WIND = 8 and so on).
+
+You can add explicit values using a colon:
+
+<span></span><span class="nd">@export_flags</span><span class="p">(</span><span class="s2">"Self:4"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Allies:8"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Foes:16"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">spell_targets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+
+Only power of 2 values are valid as bit flags options. The lowest allowed value
+is 1, as 0 means that nothing is selected. You can also add options that are a
+combination of other flags:
+
+<span></span><span class="nd">@export_flags</span><span class="p">(</span><span class="s2">"Self:4"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Allies:8"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Self and Allies:12"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Foes:16"</span><span class="p">)</span>
+<span class="k">var</span><span class="w"> </span><span class="n">spell_targets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+
+Export annotations are also provided for the physics, render, and navigation layers defined in the project settings:
+
+<span></span><span class="nd">@export_flags_2d_physics</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">layers_2d_physics</span>
+<span class="nd">@export_flags_2d_render</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">layers_2d_render</span>
+<span class="nd">@export_flags_2d_navigation</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">layers_2d_navigation</span>
+<span class="nd">@export_flags_3d_physics</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">layers_3d_physics</span>
+<span class="nd">@export_flags_3d_render</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">layers_3d_render</span>
+<span class="nd">@export_flags_3d_navigation</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">layers_3d_navigation</span>
+
+Using bit flags requires some understanding of bitwise operations.
+If in doubt, use boolean variables instead.
+
+Exporting enums
+
+See @export_enum.
+
+Properties can be exported with a type hint referencing an enum to limit their values
+to the values of the enumeration. The editor will create a widget in the Inspector, enumerating
+the following as "Thing 1", "Thing 2", "Another Thing". The value will be stored as an integer.
+
+<span></span><span class="k">enum</span><span class="w"> </span><span class="n">NamedEnum</span><span class="w"> </span><span class="p">{</span><span class="n">THING_1</span><span class="p">,</span><span class="w"> </span><span class="n">THING_2</span><span class="p">,</span><span class="w"> </span><span class="n">ANOTHER_THING</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">}</span>
+<span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">x</span><span class="p">:</span><span class="w"> </span><span class="nc">NamedEnum</span>
+
+Integer and string properties can also be limited to a specific list of values using
+the @export_enum annotation.
+The editor will create a widget in the Inspector, enumerating the following as Warrior,
+Magician, Thief. The value will be stored as an integer, corresponding to the index
+of the selected option (i.e. 0, 1, or 2).
+
+<span></span><span class="nd">@export_enum</span><span class="p">(</span><span class="s2">"Warrior"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Magician"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Thief"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">character_class</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">int</span>
+
+You can add explicit values using a colon:
+
+<span></span><span class="nd">@export_enum</span><span class="p">(</span><span class="s2">"Slow:30"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Average:60"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Very Fast:200"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">character_speed</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">int</span>
+
+If the type is String, the value will be stored as a string.
+
+<span></span><span class="nd">@export_enum</span><span class="p">(</span><span class="s2">"Rebecca"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Mary"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Leah"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">character_name</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">String</span>
+
+If you want to set an initial value, you must specify it explicitly:
+
+<span></span><span class="nd">@export_enum</span><span class="p">(</span><span class="s2">"Rebecca"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Mary"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Leah"</span><span class="p">)</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">character_name</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">String</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Rebecca"</span>
+
+Exporting arrays
+
+Exported arrays can have initializers, but they must be constant expressions.
+
+If the exported array specifies a type which inherits from Resource, the array
+values can be set in the inspector by dragging and dropping multiple files
+from the FileSystem dock at once.
+
+The default value must be a constant expression.
+
+<span></span><span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">]</span>
+
+Exported arrays can specify type (using the same hints as before).
+
+<span></span><span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">ints</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">Array</span><span class="p">[</span><span class="nb nb-Type">int</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">]</span>
+
+<span class="c1"># Nested typed arrays such as `Array[Array[float]]` are not supported yet.</span>
+<span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">two_dimensional</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">Array</span><span class="p">[</span><span class="nb nb-Type">Array</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[[</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mf">3.0</span><span class="p">,</span><span class="w"> </span><span class="mf">4.0</span><span class="p">]]</span>
+
+You can omit the default value, but it would then be null if not assigned.
+
+<span></span><span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">b</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">Array</span>
+<span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">scenes</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">Array</span><span class="p">[</span><span class="nb">PackedScene</span><span class="p">]</span>
+
+Arrays with specified types which inherit from resource can be set by
+drag-and-dropping multiple files from the FileSystem dock.
+
+<span></span><span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">textures</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">Array</span><span class="p">[</span><span class="nb">Texture</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">scenes</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">Array</span><span class="p">[</span><span class="nb">PackedScene</span><span class="p">]</span><span class="w
+
+[… truncated 10336 chars …]

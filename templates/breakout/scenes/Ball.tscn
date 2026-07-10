@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3 uid="uid://ball_scene"]
+
+[ext_resource type="Script" path="res://scripts/ball.gd" id="1_bl1234"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_bal1"]
+radius = 8
+
+[node name="Ball" type="CharacterBody2D"]
+position = Vector2(400, 400)
+script = ExtResource("1_bl1234")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_bal1")

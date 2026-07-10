@@ -1,0 +1,5 @@
+[gd_resource type="Environment" load_steps=1 format=3 uid="uid://default_env_tres"]
+
+[resource]
+background_mode = 2
+background_color = Color(0.1, 0.1, 0.15, 1)

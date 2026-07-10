@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Godot Reasonix 技能集 — 技术架构文档</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --accent: #2563eb;
+    --accent-light: #dbeafe;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
+    --success: #059669;
+    --warning: #d97706;
+    --danger: #dc2626;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", monospace;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 2rem 1rem;
+  }
+  .container { max-width: 960px; margin: 0 auto; }
+
+  header {
+    background: linear-gradient(135deg, #0f172a 0%, #2563eb 100%);
+    color: white;
+    padding: 2.5rem 2rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+  }
+  header h1 { font-size: 1.8rem; }
+  header .subtitle { font-size: 1rem; opacity: .8; margin-top: .3rem; }
+  header .meta { margin-top: 1rem; font-size: .85rem; opacity: .6; }
+
+  section {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  section h2 {
+    font-size: 1.3rem;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    padding-bottom: .5rem;
+    border-bottom: 3px solid var(--accent-light);
+  }
+  section h3 {
+    font-size: 1.05rem;
+    margin: 1.2rem 0 .6rem;
+  }
+  p, li { color: var(--text-secondary); margin-bottom: .5rem; }
+  ul, ol { padding-left: 1.4rem; }
+
+  .module-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem 1.5rem;
+    margin: 1rem 0;
+    background: #fafbfc;
+  }
+  .module-card h3 { color: var(--accent); margin-bottom: .3rem; }
+  .module-card .badge {
+    display: inline-block;
+    font-size: .75rem;
+    padding: .15rem .5rem;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-right: .3rem;
+  }
+  .badge-p0 { background: #d4edda; color: #155724; }
+  .badge-p1 { background: #fff3cd; color: #856404; }
+  .badge-dep { background: #e8f0fe; color: #2563eb; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: .8rem 0;
+    font-size: .9rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: .5rem .7rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: var(--accent-light); font-weight: 600; color: var(--accent); }
+
+  .dep-graph {
+    background: #f1f5f9;
+    padding: 1.2rem;
+    border-radius: 8px;
+    font-family: monospace;
+    white-space: pre;
+    font-size: .85rem;
+    line-height: 1.5;
+    overflow-x: auto;
+  }
+
+  .task-item {
+    border-left: 3px solid var(--accent);
+    padding: .8rem 1rem;
+    margin: .6rem 0;
+    background: #fafbfc;
+    border-radius: 0 6px 6px 0;
+  }
+  .task-item .task-id { font-weight: 600; color: var(--accent); }
+  .task-item .complexity { font-size: .8rem; padding: .1rem .4rem; border-radius: 3px; }
+  .cx-low { background: #d4edda; color: #155724; }
+  .cx-med { background: #fff3cd; color: #856404; }
+  .cx-high { background: #f8d7da; color: #721c24; }
+
+  .risk-table td:first-child { font-weight: 600; white-space: nowrap; }
+
+  footer {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: .85rem;
+    padding: 2rem 0;
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 1.5rem 1rem; }
+    header h1 { font-size: 1.3rem; }
+    section { padding: 1.2rem; }
+    .dep-graph { font-size: .75rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>🏗️ Godot Reasonix 技能集 — 技术架构</h1>
+  <div class="subtitle">基于产品 PRD 的结构化技术方案 — 供 pipeline 开发角色实现</div>
+  <div class="meta">
+    v1.0 · 架构师产出一期 · 依赖 docs/product/godot-reasonix-product-prd.html
+  </div>
+</header>
+
+<!-- ─── 1. 架构总览 ─── -->
+<section>
+  <h2>1. 架构总览</h2>
+
+  <h3>核心思路</h3>
+  <p>
+    技能集不是一个运行时服务，而是一组 <strong>Reasonix Skill Tool</strong> 定义 + 一套 <strong>文件操作库</strong>。
+    Agent 在 Reasonix 环境中加载本技能集后，获得 7 个模块约 15 个工具接口。
+    用户说自然语言 → Agent 规划 → 调用工具 → 文件写入 + Godot CLI 验证 → 项目就绪。
+  </p>
+
+  <h3>系统边界</h3>
+  <pre style="background:#f1f5f9;padding:1rem;border-radius:8px;font-size:.85rem;">
+
+  ┌──────────────────────────────────────────┐
+  │             用户 (自然语言)                │
+  └──────────┬───────────────────────────────┘
+             │ "帮我做个平台跳跃游戏"
+  ┌──────────▼───────────────────────────────┐
+  │          Agent (Reasonix 运行时)           │
+  │  ┌─────────────────────────────────────┐  │
+  │  │   Godot Reasonix 技能集 (7 模块)     │  │
+  │  │  ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐   │  │
+  │  │  │ M1│ │ M2│ │ M3│ │ M4│ │ M6│   │  │
+  │  │  └─┬─┘ └─┬─┘ └─┬─┘ └─┬─┘ └─┬─┘   │  │
+  │  │    └──┬───┘     │     │      │     │  │
+  │  │       └────┬────┘     │      │     │  │
+  │  │          ┌─▼─┐       │      │     │  │
+  │  │          │ M5│       │      │     │  │
+  │  │          └───┘       │      │     │  │
+  │  │          ┌───┐       │      │     │  │
+  │  │          │ M7│       │      │     │  │
+  │  │          └───┘       │      │     │  │
+  │  └─────────────────────────────────────┘  │
+  └──────────┬───────────────────────────────┘
+             │ 文件写入 (.tscn / .gd / project.godot)
+             │ CLI 调用 (godot --headless ...)
+  ┌──────────▼───────────────────────────────┐
+  │    目标: Godot 4.x 项目目录               │
+  │  scenes/  scripts/  assets/  project.godot│
+  └──────────────────────────────────────────┘
+  </pre>
+
+  <h3>关键架构决策</h3>
+  <table>
+    <tr><th>决策</th><th>选择</th><th>理由</th></tr>
+    <tr>
+      <td>交互方式</td><td>文件系统 + CLI</td>
+      <td>Godot 无 GUI 远程控制协议。文件操作是唯一跨平台可靠的途径</td>
+    </tr>
+    <tr>
+      <td>技能交付形态</td>
+      <td>Reasonix Skill (Playbook)</td>
+      <td>与产品定位一致：Agent 调用技能集。不需额外服务进程</td>
+    </tr>
+    <tr>
+      <td>脚本语言</td>
+      <td>GDScript (非 C#)</td>
+      <td>产品 PRD 面向 Godot 新手，GDScript 学习成本最低；C# 做可选扩展</td>
+    </tr>
+    <tr>
+      <td>是否维护编辑器插件</td>
+      <td>不做</td>
+      <td>产品 PRD 明确"不做可视化编辑器替代品"，编辑器插件属于 GUI 范畴</td>
+    </tr>
+    <tr>
+      <td>模板分发</td>
+      <td>内嵌在技能集中（复制而非引用）</td>
+      <td>每个 fork 是独立副本，用户可任意修改，不受上游模板变更影响</td>
+    </tr>
+  </table>
+</section>
+
+<!-- ─── 2. 模块分解 ─── -->
+<section>
+  <h2>2. 模块分解</h2>
+  <p>
+    按<strong>能力边界</strong>拆为 7 个模块。选择理由：每个模块的职责可以用一句话说清，
+    可以独立实现和测试。<strong>M1-M4</strong> 是原子能力，<strong>M5</strong> 是组合产物，
+    <strong>M6</strong> 是基础设施，<strong>M7</strong> 是文档。
+  </p>
+
+  <div class="module-card">
+    <h3>M1 · Project Scaffolder <span class="badge badge-p0">P0</span></h3>
+    <p><strong>一句话职责：</strong>创建一个能被 Godot 4.x 打开的合法项目目录。</p>
+    <p>创建 project.godot（含项目名、渲染器、分辨率）、目录骨架（scenes/ scripts/ assets/…）、默认空场景、占位 icon。是其他所有模块的前置条件。</p>
+    <p><strong>为什么独立成模块：</strong>项目初始化是明确的一次性操作，与场景/脚本无关。单独测试（验证 project.godot 语法）。</p>
+  </div>
+
+  <div class="module-card">
+    <h3>M2 · Scene Generator <span class="badge badge-p0">P0</span></h3>
+    <p><strong>一句话职责：</strong>将结构化节点描述转换为合法的 .tscn 文件。</p>
+    <p>创建含任意 2D 节点树的场景、向已有场景增删节点、修改节点属性。核心能力是维护 .tscn 文本格式的合法性（缩进、uid、资源引用）。</p>
+    <p><strong>为什么独立成模块：</strong>.tscn 格式有独立语法规则，与 GDScript 完全不同。需要一个专门的渲染器维护 TSON 格式。</p>
+  </div>
+
+  <div class="module-card">
+    <h3>M3 · Script Manager <span class="badge badge-p0">P0</span></h3>
+    <p><strong>一句话职责：</strong>创建 .gd 文件并挂载到场景节点上。</p>
+    <p>生成函数体和信号定义、将脚本附加到场景节点的 script 属性、建立信号连接。与 M2 紧密协作但职责分离：M2 管"场景结构"，M3 管"行为逻辑"。</p>
+    <p><strong>为什么独立成模块：</strong>GDScript 的语法验证、代码生成、挂载机制是独立领域。单一职责要求它不与场景逻辑混在一起。</p>
+  </div>
+
+  <div class="module-card">
+    <h3>M4 · Resource Resolver <span class="badge badge-p0">P0</span></h3>
+    <p><strong>一句话职责：</strong>确保外部资源文件（图片/音频/字体）被 Godot 正确索引。</p>
+    <p>将用户提供的资源文件复制到项目 assets 目录、返回正确的 res:// 路径、维护资源路径与文件系统路径的双向映射。</p>
+    <p><strong>为什么独立成模块：</strong>资源管理和场景/脚本是正交问题。不依赖 M2/M3，可以在已有项目上独立使用。</p>
+  </div>
+
+  <div class="module-card">
+    <h3>M5 · Template Library <span class="badge badge-p0">P0</span></h3>
+    <p><strong>一句话职责：</strong>提供三款可运行的 2D 游戏模板供用户 fork。</p>
+    <p>预置「平台跳跃」「打砖块」「点击收集」三个完整项目。用户 ForkTemplate → 获得可运行的独立游戏副本，之后可自由修改。</p>
+    <p><strong>为什么独立成模块：</strong>模板是 M1-M4 + M6 的组合产物。它依赖所有子模块，但提供的是更高层的「复制项目」抽象。</p>
+  </div>
+
+  <div class="module-card">
+    <h3>M6 · Godot CLI Bridge <span class="badge badge-p1">P1</span></h3>
+    <p><strong>一句话职责：</strong>封装 godot 可执行文件的所有 CLI 操作。</p>
+    <p>统一管理 godot 进程生命周期：参数构造、路径解析、超时/kill、退出码解析、版本检测。M5 用它验证模板，Agent 用它运行/导出项目。</p>
+    <p><strong>为什么独立成模块：</strong>进程管理（超时、SIGKILL、跨平台路径）是独立的技术关注点，不宜散落在其他模块中。</p>
+  </div>
+
+  <div class="module-card">
+    <h3>M7 · Skill Playbook & Documentation <span class="badge badge-p1">P1</span></h3>
+    <p><strong>一句话职责：</strong>让 Agent 知道怎么用 M1-M6。</p>
+    <p>结构化 API 说明 + 自然语言→工具链的 Few-shot 示例 + 能力边界声明的 Markdown / YAML 文档。</p>
+    <p><strong>为什么独立成模块：</strong>文档独立于实现，可单独审查、单独版本管理。</p>
+  </div>
+</section>
+
+<!-- ─── 3. 依赖关系 ─── -->
+<section>
+  <h2>3. 依赖关系</h2>
+
+  <div class="dep-graph">
+    M1 (Scaffolder)          — 无依赖，独立
+    M6 (CLI Bridge)          — 无依赖，独立
+    │
+    M2 (Scene Generator)     ──→ M1 （场景需要项目骨架）
+    M3 (Script Manager)      ──→ M2 （脚本挂载需要场景）
+    M4 (Resource Resolver)   ──→ M1 （资源导入需要项目路径）
+    │
+    M5 (Template Library)    ──→ M1 + M2 + M3 + M4 + M6
+    M7 (Documentation)       — 无代码依赖
+  </div>
+
+  <p><strong>依赖规则满足性：</strong></p>
+  <ul>
+    <li>✅ 高层 → 接口层 ← 低层实现：M5 调用 M1-M4 的接口，不调用内部实现</li>
+    <li>✅ 不允许低层 → 高层：M2 不会调用 M5，M3 不会调用 M5</li>
+    <li>✅ 无循环依赖：M1→M2→M3 是线性链，M4 只依赖 M1，M5 是汇集点</li>
+  </ul>
+</section>
+
+<!-- ─── 4. 接口定义 ─── -->
+<section>
+  <h2>4. 接口定义</h2>
+  <p>完整接口签名见 <code>docs/prd/v1/prd.yaml</code> 各模块的 <code>interfaces</code> 段。以下是概览：</p>
+
+  <table>
+    <tr><th>模块</th><th>接口</th><th>输入要点</th><th>输出</th></tr>
+    <tr>
+      <td>M1</td>
+      <td>ScaffoldProject</td>
+      <td>root_path, project_name, resolution, renderer</td>
+      <td>project_root | error</td>
+    </tr>
+    <tr>
+      <td>M2</td>
+      <td>CreateScene / AddNode / RemoveNode / SetNodeProperty</td>
+      <td>scene_path, node 结构（type, name, position, children）</td>
+      <td>scene_path | error</td>
+    </tr>
+    <tr>
+      <td>M3</td>
+      <td>CreateScript / AttachScript / ConnectSignal</td>
+      <td>script_path, extends, functions[], scene_path, node_path</td>
+      <td>script_path | error</td>
+    </tr>
+    <tr>
+      <td>M4</td>
+      <td>ImportResource / ResolvePath</td>
+      <td>source_path, dest_type, project_root</td>
+      <td>resource_path | error</td>
+    </tr>
+    <tr>
+      <td>M5</td>
+      <td>ListTemplates / ForkTemplate / CustomizeTemplate</td>
+      <td>template_id, target_path, overrides{}</td>
+      <td>project_root | error</td>
+    </tr>
+    <tr>
+      <td>M6</td>
+      <td>RunGodot / CheckGodotVersion</td>
+      <td>project_root, args[], timeout_sec</td>
+      <td>stdout, stderr, exit_code | error</td>
+    </tr>
+    <tr>
+      <td>M7</td>
+      <td>GetSkillDoc / FindPlaybook / GetScopeBoundary</td>
+      <td>intent（查询语义）</td>
+      <td>playbook | scope</td>
+    </tr>
+  </table>
+</section>
+
+<!-- ─── 5. 风险对照（7 维）─── -->
+<section>
+  <h2>5. 风险评估</h2>
+
+  <table class="risk-table">
+    <tr><th>维度</th><th>风险描述</th><th>涉及模块</th></tr>
+    <tr><td>技术债</td><td>.tscn 格式无官方 schema，每次 Godot 小版本可能变更节点属性名</td><td>M2</td></tr>
+    <tr><td>技术债</td><td>GDScript 语法在 4.0→4.1→4.2 间有破坏性变更（@export 语法）</td><td>M3</td></tr>
+    <tr><td>技术债</td><td>三个模板需随 Godot 同步更新</td><td>M5</td></tr>
+    <tr><td>回滚</td><td>每次操作生成文件 diff，Agent 通过 git revert 或文件快照实现撤销</td><td>全局</td></tr>
+    <tr><td>灰度</td><td>技能集无灰度概念，但模板可标记"实验性"标签</td><td>M5</td></tr>
+    <tr><td>熔断</td><td>Godot CLI 调用须设超时，超时后 SIGTERM → 1s → SIGKILL</td><td>M6</td></tr>
+    <tr><td>监控</td><td>所有 Godot CLI 调用的 stderr/stdout 应捕获并存档用于调试</td><td>M6</td></tr>
+    <tr><td>容错</td><td>目录已存在合法 Godot 项目 → 复用而非覆盖</td><td>M1</td></tr>
+    <tr><td>安全</td><td>路径参数 sanitize（防 ../ 穿越）</td><td>M1, M6</td></tr>
+    <tr><td>安全</td><td>用户提供的 GDScript 代码片段不做直接 eval，用模板拼接</td><td>M3</td></tr>
+  </table>
+
+  <p><strong>无风险模块说明：</strong>M7（文档）不涉及运行时，无以上七维风险。</p>
+</section>
+
+<!-- ─── 6. 任务分解 ─── -->
+<section>
+  <h2>6. 任务清单</h2>
+
+  <div class="task-item">
+    <span class="task-id">T1</span> ·
+    <span class="complexity cx-low">低</span>
+    <strong>M1 项目脚手架核心</strong><br>
+    <span>实现 ScaffoldProject：目录创建 + project.godot 模板渲染 + 默认场景写入。
+    涉及文件：<code>tools/scaffolder.ts</code></span><br>
+    <span>依赖：无 · 验收：M1-A1 + M1-A2</span>
+  </div>
+
+  <div class="task-item">
+    <span class="task-id">T2</span> ·
+    <span class="complexity cx-high">高</span>
+    <strong>M2 .tscn 生成引擎</strong><br>
+    <span>实现 .tscn 文本生成器：节点类型→TSON 映射表、缩进格式化、uid 生成。
+    支持 2D 常用节点（Node2D, Sprite2D, CharacterBody2D, Area2D, CollisionShape2D, StaticBody2D）。
+    涉及文件：<code>tools/scene_generator.ts</code></span><br>
+    <span>依赖：T1 · 验收：M2-A1 + M2-A2 + M2-A3</span>
+  </div>
+
+  <div class="task-item">
+    <span class="task-id">T3</span> ·
+    <span class="complexity cx-med">中</span>
+    <strong>M3 脚本管理</strong><br>
+    <span>实现 GDScript 代码模板引擎 + .tscn script 属性写入 + 信号连接段生成。
+    涉及文件：<code>tools/script_manager.ts</code></span><br>
+    <span>依赖：T2 · 验收：M3-A1 + M3-A2 + M3-A4</span>
+  </div>
+
+  <div class="task-item">
+    <span class="task-id">T4</span> ·
+    <span class="complexity cx-low">低</span>
+    <strong>M4 资源解析器</strong><br>
+    <span>实现文件复制 + res:// 路径生成 + 路径双向解析。处理中文/特殊字符。
+    涉及文件：<code>tools/resource_resolver.ts</code></span><br>
+    <span>依赖：T1 · 验收：M4-A1 + M4-A2</span>
+  </div>
+
+  <div class="task-item">
+    <span class="task-id">T5</span> ·
+    <span class="complexity cx-med">中</span>
+    <strong>M6 Godot CLI 桥</strong><br>
+    <span>封装 child_process 执行 godot：参数构造、超时管理、退出码解析、版本检测。
+    涉及文件：<code>tools/godot_cli.ts</code></span><br>
+    <span>依赖：无 · 验收：M6-A1 + M6-A2</span>
+  </div>
+
+  <div class="task-item">
+    <span class="task-id">T6</span> ·
+    <span class="complexity cx-high">高</span>
+    <strong>M5 三个游戏模板开发</strong><br>
+    <span>用 M1-M4 + M6 实现三个完整可玩的 2D 游戏模板：
+    平台跳跃（Platformer）、打砖块（Breakout）、点击收集（Clicker）。
+    每个模板需含：完整场景、脚本、资源占位文件。
+    涉及文件：<code>templates/platformer/</code> <code>templates/breakout/</code> <code>templates/clicker/</code></span><br>
+    <span>依赖：T1-T5 · 验收：M5-A1 + M5-A3</span>
+  </div>
+
+  <div class="task-item">
+    <span class="task-id">T7</span> ·
+    <span class="complexity cx-med">中</span>
+    <strong>M7 文档与 Playbook 编写</strong><br>
+    <span>为 M1-M6 每个接口写 Agent 可读的说明 + 至少一个自然语言→工具链映射示例。
+    编写 Scope Boundary 文档（哪些场景 Agent 应拒绝或降级）。
+    涉及文件：<code>SKILL.md</code> <code>docs/playbooks/</code></span><br>
+    <span>依赖：T6 · 验收：M7-A1 + M7-A2 + M7-A3</span>
+  </div>
+
+  <div class="task-item">
+    <span class="task-id">T8</span> ·
+    <span class="complexity cx-med">中</span>
+    <strong>S 层场景测试</strong><br>
+    <span>端到端测试：用技能集创建一个完整的小游戏项目（如平台跳跃），
+    用 godot --headless --check 验证项目加载无误，
+    用 godot --headless --export 验证导出。
+    涉及文件：<code>tests/e2e/</code></span><br>
+    <span>依赖：T6 · 验收：M1-A4 + M2-A4 + M5-A3</span>
+  </div>
+</section>
+
+<!-- ─── 7. 实现指引 ─── -->
+<section>
+  <h2>7. 实现指引</h2>
+
+  <h3>推荐实现顺序</h3>
+  <pre style="background:#f1f5f9;padding:.8rem 1rem;border-radius:8px;font-size:.85rem;">
+  T1 (M1 脚手架) ──────────────── 基础，无依赖
+  T5 (M6 CLI Bridge) ─────────── 基础，无依赖，尽早可验证 godot 可用
+       │
+  T2 (M2 场景生成器) ─── 核心难点，先攻
+  T4 (M4 资源解析器) ─── 简单，与 T2 可并行
+       │
+  T3 (M3 脚本管理) ───── 依赖 T2
+       │
+  T6 (M5 模板) ──────── 依赖 T1-T5，验证整体
+  T8 (S 层测试) ─────── 依赖 T6
+  T7 (M7 文档) ──────── 最后，但可提前写框架
+  </pre>
+
+  <h3>技术选型建议（FREE ZONE）</h3>
+  <ul>
+    <li>TypeScript（与 Reasonix 运行时的语言一致）</li>
+    <li>.tscn 生成用模板字符串 + 逐行构建器，而非 XML DOM（.tscn 不是 XML，是自定义 TSON）</li>
+    <li>GDScript 生成用模板引擎（如 EJS 风格），避免 AST 操作增加复杂度（YAGNI）</li>
+    <li>测试框架：vitest（TypeScript 生态）</li>
+    <li>Godot 版本锁定：GitHub Action 中用 <code>4.3-stable</code> Docker 镜像做 CI</li>
+  </ul>
+</section>
+
+<footer>
+  <p>🏗️ 架构师产出 · 非技术决策在 FREE ZONE 内由开发角色自主决定</p>
+  <p>由 pipeline 转换角色：arch-done → 开发</p>
+</footer>
+
+</div>
+</body>
+</html>

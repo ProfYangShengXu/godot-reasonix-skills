@@ -1,0 +1,19 @@
+{
+  "name": "godot-reasonix-skills",
+  "version": "1.0.0",
+  "description": "让编程 Agent 操控 Godot 引擎的 Reasonix 技能集",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:u": "vitest run tests/u/",
+    "test:i": "vitest run tests/i/",
+    "test:s": "vitest run tests/s/",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}

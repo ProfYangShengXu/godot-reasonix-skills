@@ -1,0 +1,816 @@
+GDScript reference &mdash; Godot Engine (stable) documentation in English
+https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_basics.html
+
+<!DOCTYPE html>
+
+GDScript reference &mdash; Godot Engine (stable) documentation in English
+
+Godot Engine 4.7 documentation in English
+
+Scripting
+
+GDScript
+
+GDScript reference
+
+Edit on GitHub
+
+Learn how to contribute!
+
+GDScript reference
+
+GDScript is a high-level, object-oriented, imperative, and gradually typed programming language built for Godot.
+It uses an indentation-based syntax similar to languages like
+Python.
+Its goal is to be optimized for and tightly integrated with Godot Engine,
+allowing great flexibility for content creation and integration.
+
+GDScript is entirely independent from Python and is not based on it.
+
+History
+
+Note
+
+Documentation about GDScript's history has been moved to the
+Frequently Asked Questions.
+
+Example of GDScript
+
+Some people can learn better by taking a look at the syntax, so
+here's an example of how GDScript looks.
+
+<span></span><span class="c1"># Everything after "#" is a comment.</span>
+<span class="c1"># A file is a class!</span>
+
+<span class="c1"># (optional) icon to show in the editor dialogs:</span>
+<span class="nd">@icon</span><span class="p">(</span><span class="s2">"res://path/to/optional/icon.svg"</span><span class="p">)</span>
+
+<span class="c1"># (optional) class definition:</span>
+<span class="k">class_name</span><span class="w"> </span><span class="nc">MyClass</span>
+
+<span class="c1"># Inheritance:</span>
+<span class="k">extends</span><span class="w"> </span><span class="nc">BaseClass</span>
+
+<span class="c1"># Member variables.</span>
+<span class="k">var</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span>
+<span class="k">var</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Hello"</span>
+<span class="k">var</span><span class="w"> </span><span class="n">arr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">]</span>
+<span class="k">var</span><span class="w"> </span><span class="n">dict</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="s2">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"value"</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">}</span>
+<span class="k">var</span><span class="w"> </span><span class="n">other_dict</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="n">key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"value"</span><span class="p">,</span><span class="w"> </span><span class="n">other_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">}</span>
+<span class="k">var</span><span class="w"> </span><span class="n">typed_var</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">int</span>
+<span class="k">var</span><span class="w"> </span><span class="n">inferred_type</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="s2">"String"</span>
+
+<span class="c1"># Constants.</span>
+<span class="k">const</span><span class="w"> </span><span class="n">ANSWER</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">42</span>
+<span class="k">const</span><span class="w"> </span><span class="n">THE_NAME</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Charly"</span>
+
+<span class="c1"># Enums.</span>
+<span class="k">enum</span><span class="w"> </span><span class="p">{</span><span class="n">UNIT_NEUTRAL</span><span class="p">,</span><span class="w"> </span><span class="n">UNIT_ENEMY</span><span class="p">,</span><span class="w"> </span><span class="n">UNIT_ALLY</span><span class="p">}</span>
+<span class="k">enum</span><span class="w"> </span><span class="n">Named</span><span class="w"> </span><span class="p">{</span><span class="n">THING_1</span><span class="p">,</span><span class="w"> </span><span class="n">THING_2</span><span class="p">,</span><span class="w"> </span><span class="n">ANOTHER_THING</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">}</span>
+
+<span class="c1"># Built-in vector types.</span>
+<span class="k">var</span><span class="w"> </span><span class="n">v2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb nb-Type">Vector2</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span>
+<span class="k">var</span><span class="w"> </span><span class="n">v3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb nb-Type">Vector3</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span>
+
+<span class="c1"># Function, with a default value for the last parameter.</span>
+<span class="k">func</span><span class="w"> </span><span class="nf nf-Declaration">some_function</span><span class="p">(</span><span class="n">param1</span><span class="p">,</span><span class="w"> </span><span class="n">param2</span><span class="p">,</span><span class="w"> </span><span class="n">param3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">123</span><span class="p">):</span>
+<span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">local_const</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span>
+
+<span class="w"> </span><span class="k k-ControlFlow">if</span><span class="w"> </span><span class="n">param1</span><span class="w"> </span><span class="o"><</span><span class="w"> </span><span class="n">local_const</span><span class="p">:</span>
+<span class="w"> </span><span class="nb nb-Function">print</span><span class="p">(</span><span class="n">param1</span><span class="p">)</span>
+<span class="w"> </span><span class="k k-ControlFlow">elif</span><span class="w"> </span><span class="n">param2</span><span class="w"> </span><span class="o">></span><span class="w"> </span><span class="mi">5</span><span class="p">:</span>
+<span class="w"> </span><span class="nb nb-Function">print</span><span class="p">(</span><span class="n">param2</span><span class="p">)</span>
+<span class="w"> </span><span class="k k-ControlFlow">else</span><span class="p">:</span>
+<span class="w"> </span><span class="nb nb-Function">print</span><span class="p">(</span><span class="s2">"Fail!"</span><span class="p">)</span>
+
+<span class="w"> </span><span class="k k-ControlFlow">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nb nb-Function">range</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>
+<span class="w"> </span><span class="nb nb-Function">print</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+<span class="w"> </span><span class="k k-ControlFlow">while</span><span class="w"> </span><span class="n">param2</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">:</span>
+<span class="w"> </span><span class="n">param2</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="mi">1</span>
+
+<span class="w"> </span><span class="k k-ControlFlow">match</span><span class="w"> </span><span class="n">param3</span><span class="p">:</span>
+<span class="w"> </span><span class="mi">3</span><span class="p">:</span>
+<span class="w"> </span><span class="nb nb-Function">print</span><span class="p">(</span><span class="s2">"param3 is 3!"</span><span class="p">)</span>
+<span class="w"> </span><span class="n">_</span><span class="p">:</span>
+<span class="w"> </span><span class="nb nb-Function">print</span><span class="p">(</span><span class="s2">"param3 is not 3!"</span><span class="p">)</span>
+
+<span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">local_var</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">param1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">3</span>
+<span class="w"> </span><span class="k k-ControlFlow">return</span><span class="w"> </span><span class="n">local_var</span>
+
+<span class="c1"># Functions override functions with the same name on the base/super class.</span>
+<span class="c1"># If you still want to call them, use "super":</span>
+<span class="k">func</span><span class="w"> </span><span class="nf nf-Declaration">something</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span><span class="w"> </span><span class="n">p2</span><span class="p">):</span>
+<span class="w"> </span><span class="k">super</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span><span class="w"> </span><span class="n">p2</span><span class="p">)</span>
+
+<span class="c1"># It's also possible to call another function in the super class:</span>
+<span class="k">func</span><span class="w"> </span><span class="nf nf-Declaration">other_something</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span><span class="w"> </span><span class="n">p2</span><span class="p">):</span>
+<span class="w"> </span><span class="k">super</span><span class="o">.</span><span class="nf">something</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span><span class="w"> </span><span class="n">p2</span><span class="p">)</span>
+
+<span class="c1"># Inner class</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Something</span><span class="p">:</span>
+<span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span>
+
+<span class="c1"># Constructor</span>
+<span class="k">func</span><span class="w"> </span><span class="nf nf-Declaration">_init</span><span class="p">():</span>
+<span class="w"> </span><span class="nb nb-Function">print</span><span class="p">(</span><span class="s2">"Constructed!"</span><span class="p">)</span>
+<span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">lv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Something</span><span class="o">.</span><span class="nf">new</span><span class="p">()</span>
+<span class="w"> </span><span class="nb nb-Function">print</span><span class="p">(</span><span class="n">lv</span><span class="o">.</span><span class="vi">a</span><span class="p">)</span>
+
+If you have previous experience with statically typed languages such as
+C, C++, or C# but never used a dynamically typed one before, it is advised you
+read this tutorial: GDScript: An introduction to dynamic languages.
+
+Identifiers
+
+Any string that restricts itself to alphabetic characters (a to z and
+A to Z), digits (0 to 9) and _ qualifies as an identifier.
+Additionally, identifiers must not begin with a digit. Identifiers are
+case-sensitive (foo is different from FOO).
+
+Identifiers may also contain most Unicode characters part of
+UAX#31. This allows you to use
+identifier names written in languages other than English. Unicode characters
+that are considered "confusable" for ASCII characters and emoji are not allowed
+in identifiers.
+
+Keywords
+
+The following is the list of keywords supported by the language. Since
+keywords are reserved words (tokens), they can't be used as identifiers.
+Operators (like in, not, and or or) and names of built-in types
+as listed in the following sections are also reserved.
+
+Keywords are defined in the GDScript tokenizer
+in case you want to take a look under the hood.
+
+Keyword
+
+Description
+
+if
+
+See if/else/elif.
+
+elif
+
+See if/else/elif.
+
+else
+
+See if/else/elif.
+
+for
+
+See for.
+
+while
+
+See while.
+
+match
+
+See match.
+
+when
+
+Used by pattern guards in match statements.
+
+break
+
+Exits the execution of the current for or while loop.
+
+continue
+
+Immediately skips to the next iteration of the for or while loop.
+
+pass
+
+Used where a statement is required syntactically but execution of code is undesired, e.g. in empty functions.
+
+return
+
+Returns a value from a function.
+
+class
+
+Defines an inner class. See Inner classes.
+
+class_name
+
+Defines the script as a globally accessible class with the specified name. See Registering named classes.
+
+extends
+
+Defines what class to extend with the current class.
+
+is
+
+Tests whether a variable extends a given class, or is of a given built-in type.
+
+in
+
+Tests whether a value is within a string, array, range, dictionary, or node. When used with for, it iterates through them instead of testing.
+
+as
+
+Cast the value to a given type if possible.
+
+self
+
+Refers to current class instance. See self.
+
+super
+
+Resolves the scope of the parent method. See Inheritance.
+
+signal
+
+Defines a signal. See Signals.
+
+func
+
+Defines a function. See Functions.
+
+static
+
+Defines a static function or a static member variable.
+
+const
+
+Defines a constant. See Constants.
+
+enum
+
+Defines an enum. See Enums.
+
+var
+
+Defines a variable. See Variables.
+
+breakpoint
+
+Editor helper for debugger breakpoints. Unlike breakpoints created by clicking in the gutter, breakpoint is stored in the script itself.
+This makes it persistent across different machines when using version control.
+
+preload
+
+Preloads a class or variable. See Classes as resources.
+
+await
+
+Waits for a signal or a coroutine to finish. See Awaiting signals or coroutines.
+
+yield
+
+Previously used for coroutines. Kept as keyword for transition.
+
+assert
+
+Asserts a condition, logs error on failure. Ignored in non-debug builds. See Assert keyword.
+
+void
+
+Used to represent that a function does not return any value.
+
+PI
+
+PI constant.
+
+TAU
+
+TAU constant.
+
+INF
+
+Infinity constant. Used for comparisons and as result of calculations.
+
+NAN
+
+NAN (not a number) constant. Used as impossible result from calculations.
+
+Operators
+
+The following is the list of supported operators and their precedence. All binary operators are left-associative,
+including the ** operator. This means that 2 ** 2 ** 3 is equal to (2 ** 2) ** 3. Use parentheses to explicitly specify precedence you need, for
+example 2 ** (2 ** 3). The ternary if/else operator is right-associative.
+
+Operator
+
+Description
+
+( )
+
+Grouping (highest priority)
+
+Parentheses are not really an operator, but allow you to explicitly specify
+the precedence of an operation.
+
+x[index]
+
+Subscription
+
+x.attribute
+
+Attribute reference
+
+foo()
+
+Function call
+
+await x
+
+Awaiting signals or coroutines
+
+x is Node
+
+x is not Node
+
+Type checking
+
+See also is_instance_of()
+function.
+
+x ** y
+
+Power
+
+Multiplies x by itself y times, similar to calling
+pow() function.
+
+~x
+
+Bitwise NOT
+
++x
+
+-x
+
+Identity / Negation
+
+x * y
+
+x / y
+
+x % y
+
+Multiplication / Division / Remainder
+
+The % operator is additionally used for
+format strings.
+
+Note: These operators have the same behavior as C++, which may be
+unexpected for users coming from Python, JavaScript, etc. See a detailed
+note after the table.
+
+x + y
+
+x - y
+
+Addition (or Concatenation) / Subtraction
+
+x << y
+
+x >> y
+
+Bit shifting
+
+x & y
+
+Bitwise AND
+
+x ^ y
+
+Bitwise XOR
+
+x | y
+
+Bitwise OR
+
+x == y
+
+x != y
+
+x < y
+
+x > y
+
+x <= y
+
+x >= y
+
+Comparison
+
+See a detailed note after the table.
+
+x in y
+
+x not in y
+
+Inclusion checking
+
+in is also used with the for keyword as part of the syntax.
+
+not x
+
+!x
+
+Boolean NOT and its unrecommended alias
+
+x and y
+
+x && y
+
+Boolean AND and its unrecommended alias
+
+x or y
+
+x || y
+
+Boolean OR and its unrecommended alias
+
+true_expr if cond else false_expr
+
+Ternary if/else
+
+x as Node
+
+Type casting
+
+x = y
+
+x += y
+
+x -= y
+
+x *= y
+
+x /= y
+
+x **= y
+
+x %= y
+
+x &= y
+
+x |= y
+
+x ^= y
+
+x <<= y
+
+x >>= y
+
+Assignment (lowest priority)
+
+You cannot use an assignment operator inside an expression.
+
+Note
+
+The behavior of some operators may differ from what you expect:
+
+If both operands of the / operator are int, then integer division is performed instead of fractional. For example 5 / 2 == 2, not 2.5.
+If this is not desired, use at least one float literal (x / 2.0), cast (float(x) / y), or multiply by 1.0 (x * 1.0 / y).
+
+The % operator is only available for ints, for floats use the fmod() function.
+
+For negative values, the % operator and fmod() use truncation instead of rounding towards negative infinity.
+This means that the remainder has a sign. If you need the remainder in a mathematical sense, use the posmod() and
+fposmod() functions instead.
+
+The == and != operators sometimes allow you to compare values of different types (for example, 1 == 1.0 is true), but in other cases it can cause
+a runtime error. If you're not sure about the types of the operands, you can safely use the is_same() function
+(but note that it is more strict about types and references). To compare floats, use the is_equal_approx()
+and is_zero_approx() functions instead.
+
+Literals
+
+Example(s)
+
+Description
+
+null
+
+Null value
+
+false, true
+
+Boolean values
+
+45
+
+Base 10 integer
+
+0x8f51
+
+Base 16 (hexadecimal) integer
+
+0b101010
+
+Base 2 (binary) integer
+
+3.14, 58.1e-10
+
+Floating-point number (real)
+
+"Hello", 'Hi'
+
+Regular strings
+
+"""Hello""", '''Hi'''
+
+Triple-quoted regular strings
+
+r"Hello", r'Hi'
+
+Raw strings
+
+r"""Hello""", r'''Hi'''
+
+Triple-quoted raw strings
+
+&"name"
+
+StringName
+
+^"Node/Label"
+
+NodePath
+
+There are also two constructs that look like literals, but actually are not:
+
+Example
+
+Description
+
+$NodePath
+
+Shorthand for get_node("NodePath")
+
+%UniqueNode
+
+Shorthand for get_node("%UniqueNode")
+
+Integers and floats can have their numbers separated with _ to make them more readable.
+The following ways to write numbers are all valid:
+
+<span></span><span class="mi">12_345_678</span><span class="w"> </span><span class="c1"># Equal to 12345678.</span>
+<span class="mf">3.141_592_7</span><span class="w"> </span><span class="c1"># Equal to 3.1415927.</span>
+<span class="mh">0x8080_0000_ffff</span><span class="w"> </span><span class="c1"># Equal to 0x80800000ffff.</span>
+<span class="mb">0b11_00_11_00</span><span class="w"> </span><span class="c1"># Equal to 0b11001100.</span>
+
+Regular string literals can contain the following escape sequences:
+
+Escape sequence
+
+Expands to
+
+\n
+
+Newline (line feed)
+
+\t
+
+Horizontal tab character
+
+\r
+
+Carriage return
+
+\a
+
+Alert (beep/bell)
+
+\b
+
+Backspace
+
+\f
+
+Formfeed page break
+
+\v
+
+Vertical tab character
+
+\"
+
+Double quote
+
+\'
+
+Single quote
+
+\\
+
+Backslash
+
+\uXXXX
+
+UTF-16 Unicode codepoint
+XXXX
+(hexadecimal, case-insensitive)
+
+\UXXXXXX
+
+UTF-32 Unicode codepoint
+XXXXXX
+(hexadecimal, case-insensitive)
+
+There are two ways to represent an escaped Unicode character above 0xFFFF:
+
+as a UTF-16 surrogate pair \uXXXX\uXXXX.
+
+as a single UTF-32 codepoint \UXXXXXX.
+
+Also, using \ followed by a newline inside a string will allow you to continue it in the next line,
+without inserting a newline character in the string itself.
+
+A string enclosed in quotes of one type (for example ") can contain quotes of another type
+(for example ') without escaping. Triple-quoted strings allow you to avoid escaping up to
+two consecutive quotes of the same type (unless they are adjacent to the string edges).
+
+Raw string literals always encode the string as it appears in the source code.
+This is especially useful for regular expressions. A raw string literal doesn't process escape sequences,
+however it does recognize \\ and \" (\') and replaces them with themselves.
+Thus, a string can have a quote that matches the opening one, but only if it's preceded by a backslash.
+
+<span></span><span class="nb nb-Function">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\t</span><span class="s2">char=</span><span class="se">\"\\</span><span class="s2">t</span><span class="se">\"</span><span class="s2">"</span><span class="p">)</span><span class="w"> </span><span class="c1"># Prints ` char="\t"`.</span>
+<span class="nb nb-Function">print</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\tchar=</span><span class="se">\"\\</span><span class="s2">t</span><span class="se">\"</span><span class="s2">"</span><span class="p">)</span><span class="w"> </span><span class="c1"># Prints `\tchar=\"\\t\"`.</span>
+
+Note
+
+Some strings cannot be represented using raw string literals: you cannot have an odd number
+of backslashes at the end of a string or have an unescaped opening quote inside the string.
+However, in practice this doesn't matter since you can use a different quote type
+or use concatenation with a regular string literal.
+
+GDScript also supports format strings.
+
+Annotations
+
+Annotations are special tokens in GDScript that act as modifiers to an entire script,
+a declaration, a statement, or a location in the source code. Annotations may affect
+how the script is treated by the Godot editor and the GDScript compiler.
+
+Every annotation starts with the @ character and is specified by a name. A
+detailed description and example for each annotation can be found inside the
+GDScript class reference.
+
+For instance, you can use it to export a value to the editor:
+
+<span></span><span class="nd">@export_range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s2">"or_greater"</span><span class="p">)</span>
+<span class="k">var</span><span class="w"> </span><span class="n">ranged_var</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">int</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">50</span>
+
+For more information about exporting properties, read the GDScript exports
+article.
+
+Any constant expression compatible with the required argument type can be passed as an annotation argument value:
+
+<span></span><span class="k">const</span><span class="w"> </span><span class="n">MAX_SPEED</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">120.0</span>
+
+<span class="nd">@export_range</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">MAX_SPEED</span><span class="p">)</span>
+<span class="k">var</span><span class="w"> </span><span class="n">initial_speed</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">float</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.25</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">MAX_SPEED</span>
+
+Annotations can be specified one per line or all in the same line. They affect
+the next statement that isn't an annotation. Annotations can have arguments sent
+between parentheses and separated by commas.
+
+Both of these are the same:
+
+<span></span><span class="err">@</span><span class="n">annotation_a</span>
+<span class="err">@</span><span class="n">annotation_b</span>
+<span class="k">var</span><span class="w"> </span><span class="n">variable</span>
+
+<span class="err">@</span><span class="n">annotation_a</span><span class="w"> </span><span class="err">@</span><span class="n">annotation_b</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">variable</span>
+
+@onready annotation
+
+When using nodes, it's common to desire to keep references to parts
+of the scene in a variable. As scenes are only warranted to be
+configured when entering the active scene tree, the sub-nodes can only
+be obtained when a call to Node._ready() is made.
+
+<span></span><span class="k">var</span><span class="w"> </span><span class="n">my_label</span>
+
+<span class="k">func</span><span class="w"> </span><span class="nf nf-Declaration">_ready</span><span class="p">():</span>
+<span class="w"> </span><span class="n">my_label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">get_node</span><span class="p">(</span><span class="s2">"MyLabel"</span><span class="p">)</span>
+
+This can get a little cumbersome, especially when nodes and external
+references pile up. For this, GDScript has the @onready annotation, that
+defers initialization of a member variable until _ready() is called. It
+can replace the above code with a single line:
+
+<span></span><span class="nd">@onready</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">my_label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">get_node</span><span class="p">(</span><span class="s2">"MyLabel"</span><span class="p">)</span>
+
+Warning
+
+Applying @onready and any @export annotation to the same variable
+doesn't work as you might expect. The @onready annotation will cause
+the default value to be set after the @export takes effect and will
+override it:
+
+<span></span><span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"init_value_a"</span>
+<span class="nd">@onready</span><span class="w"> </span><span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"init_value_b"</span>
+
+<span class="k">func</span><span class="w"> </span><span class="nf nf-Declaration">_init</span><span class="p">():</span>
+<span class="w"> </span><span class="nb nb-Function">prints</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="c1"># init_value_a <null></span>
+
+<span class="k">func</span><span class="w"> </span><span class="nf nf-Declaration">_notification</span><span class="p">(</span><span class="n">what</span><span class="p">):</span>
+<span class="w"> </span><span class="k k-ControlFlow">if</span><span class="w"> </span><span class="n">what</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">NOTIFICATION_SCENE_INSTANTIATED</span><span class="p">:</span>
+<span class="w"> </span><span class="nb nb-Function">prints</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="c1"># exported_value_a exported_value_b</span>
+
+<span class="k">func</span><span class="w"> </span><span class="nf nf-Declaration">_ready</span><span class="p">():</span>
+<span class="w"> </span><span class="nb nb-Function">prints</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="c1"># exported_value_a init_value_b</span>
+
+Therefore, the ONREADY_WITH_EXPORT warning is generated, which is treated
+as an error by default. We do not recommend disabling or ignoring it.
+
+Comments
+
+Anything from a # to the end of the line is ignored and is
+considered a comment.
+
+<span></span><span class="c1"># This is a comment.</span>
+
+Tip
+
+In the Godot script editor, special keywords are highlighted within comments
+to bring the user's attention to specific comments:
+
+Critical (appears in red): ALERT, ATTENTION, CAUTION,
+CRITICAL, DANGER, SECURITY
+
+Warning (appears in yellow): BUG, DEPRECATED, FIXME,
+HACK, TASK, TBD, TODO, WARNING
+
+Notice (appears in green): INFO, NOTE, NOTICE, TEST,
+TESTING
+
+These keywords are case-sensitive, so they must be written in uppercase for them
+to be recognized:
+
+<span></span><span class="c1"># In the example below, "TODO" will appear in yellow by default.</span>
+<span class="c1"># The `:` symbol after the keyword is not required, but it's often used.</span>
+
+<span class="c1"># TODO: Add more items for the player to choose from.</span>
+
+The list of highlighted keywords and their colors can be changed in the Text
+Editor > Theme > Comment Markers section of the Editor Settings.
+
+Use two hash symbols (##) instead of one (#) to add a documentation
+comment, which will appear in the script documentation and in the inspector
+description of an exported variable. Documentation comments must be placed
+directly above a documentable item (such as a member variable), or at the top
+of a file. Dedicated formatting options are also available. See
+GDScript documentation comments for details.
+
+<span></span><span class="c c-Doc">## This comment will appear in the script documentation.</span>
+<span class="k">var</span><span class="w"> </span><span class="n">value</span>
+
+<span class="c c-Doc">## This comment will appear in the inspector tooltip, and in the documentation.</span>
+<span class="nd">@export</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="n">exported_value</span>
+
+Code regions
+
+Code regions are special types of comments that the script editor understands as
+foldable regions. This means that after writing code region comments, you can
+collapse and expand the region by clicking the arrow that appears at the left of
+the comment. This arrow appears within a purple square to be distinguishable
+from standard code folding.
+
+The syntax is as follows:
+
+<span></span><span class="c1"># Important: There must be *no* space between the `#` and `region` or `endregion`.</span>
+
+<span class="c1"># Region without a description:</span>
+<span class="c c-Region">#region</span>
+<span class="o">...</span>
+<span class="c c-Region">#endregion</span>
+
+<span class="c1"># Region with a description:</span>
+<span class="c c-Region">#region Some description that is displayed even when collapsed</span>
+<span class="o">...</span>
+<span class="c c-Region">#endregion</span>
+
+Tip
+
+To create a code region quickly, select several lines in the script editor,
+right-click the selection then choose Create Code Region. The region
+description will be selected automatically for editing.
+
+It is possible to nest code regions within other code regions.
+
+Here's a concrete usage example of code regions:
+
+<span></span><span class="c1"># This comment is outside the code region. It will be visible when collapsed.</span>
+<span class="c c-Region">#region Terrain generation</span>
+<span class="c1"># This comment is inside the code region. It won't be visible when collapsed.</span>
+<span class="k">func</span><span class="w"> </span><span class="nf nf-Declaration">generate_lakes</span><span class="p">():</span>
+<span class="w"> </span><span class="k k-ControlFlow">pass</span>
+
+<span class="k">func</span><span class="w"> </span><span class="nf nf-Declaration">generate_hills</span><span class="p">():</span>
+<span class="w"> </span><span class="k k-ControlFlow">pass</span>
+<span class="c c-Region">#endregion
+
+[… truncated 171524 chars …]

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Godot Reasonix 技能集 — 产品设计文档</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --accent: #2a7de1;
+    --accent-light: #e8f0fe;
+    --text: #1a1a2e;
+    --text-secondary: #555;
+    --border: #dee2e6;
+    --success: #0f7b5a;
+    --warning: #b8860b;
+    --danger: #c0392b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 2rem 1rem;
+  }
+  .container { max-width: 880px; margin: 0 auto; }
+  header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #2a7de1 100%);
+    color: white;
+    padding: 3rem 2rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+  }
+  header h1 { font-size: 2.2rem; margin-bottom: .5rem; }
+  header .subtitle { font-size: 1.1rem; opacity: .85; }
+  header .meta { margin-top: 1.2rem; font-size: .9rem; opacity: .7; }
+
+  section {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  section h2 {
+    font-size: 1.4rem;
+    color: var(--accent);
+    margin-bottom: 1.2rem;
+    padding-bottom: .5rem;
+    border-bottom: 3px solid var(--accent-light);
+  }
+  section h3 {
+    font-size: 1.1rem;
+    margin: 1.2rem 0 .6rem;
+    color: var(--text);
+  }
+  section p, section li { margin-bottom: .6rem; color: var(--text-secondary); }
+  ul, ol { padding-left: 1.4rem; }
+  blockquote {
+    border-left: 4px solid var(--accent);
+    background: var(--accent-light);
+    padding: .8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: .95rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: .6rem .8rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--accent-light);
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .tag {
+    display: inline-block;
+    padding: .15rem .6rem;
+    border-radius: 20px;
+    font-size: .8rem;
+    font-weight: 600;
+  }
+  .tag-mvp { background: #d4edda; color: #155724; }
+  .tag-nth { background: #fff3cd; color: #856404; }
+  .tag-wont { background: #f8d7da; color: #721c24; }
+  .badge {
+    display: inline-block;
+    background: var(--accent-light);
+    color: var(--accent);
+    padding: .1rem .5rem;
+    border-radius: 4px;
+    font-size: .8rem;
+    font-weight: 600;
+  }
+  .risk-card {
+    border-left: 4px solid var(--border);
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .risk-card.market { border-color: var(--danger); background: #fef2f2; }
+  .risk-card.ops { border-color: var(--warning); background: #fffbeb; }
+  .risk-card.growth { border-color: var(--accent); background: var(--accent-light); }
+  .risk-card.monetize { border-color: var(--success); background: #ecfdf5; }
+  footer {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: .85rem;
+    padding: 2rem 0;
+  }
+  @media (max-width: 600px) {
+    header { padding: 2rem 1.2rem; }
+    header h1 { font-size: 1.6rem; }
+    section { padding: 1.2rem; }
+    table { font-size: .85rem; }
+    th, td { padding: .4rem .5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>🎮 Godot Reasonix 技能集</h1>
+  <div class="subtitle">让编程 Agent 操控 Godot 引擎，零门槛开发游戏</div>
+  <div class="meta">
+    <span>产品设计文档 v1.0</span> · <span>非技术方案</span> · <span>后续由 pipeline 架构师转换为技术 PRD</span>
+  </div>
+</header>
+
+<!-- 1. 背景与目标 -->
+<section>
+  <h2>1. 背景与目标</h2>
+
+  <h3>现实问题</h3>
+  <p>
+    大量有编程能力但没有游戏开发经验的人（前端/后端工程师、学生、独立创作者）想用 Godot 做游戏，
+    但 Godot 编辑器本身是一个复杂的 IDE 类图形界面——场景树、节点系统、信号连接、GDScript 调试……
+    学习曲线陡峭。即使会写代码，也要花数周熟悉编辑器操作和工作流。
+  </p>
+  <p>
+    另一方面，编程 Agent（Cursor / Windsurf / Reasonix 等）已经能写代码、操控命令行、操作文件系统，
+    但它无法「看见」Godot 编辑器的画布、场景树、资源面板——它能生成 <code>.tscn</code> 和 <code>.gd</code> 文件，
+    但缺少一个<strong>技能层</strong>把「自然语言需求」转换成「Godot 项目可执行的操作序列」。
+  </p>
+
+  <h3>一句话定位</h3>
+  <blockquote>「像 VSCode Copilot 之于代码 —— 但之于 Godot 编辑器。」</blockquote>
+  <p>更准确地说：一套 Agent 可调用的技能集 + 脚手架，让用户用自然语言描述游戏想法，Agent 自动完成 Godot 项目的搭建、场景编排、脚本编写、资源管理。</p>
+
+  <h3>成功标准（非技术指标）</h3>
+  <ul>
+    <li><strong>新手首款游戏用时 &lt; 2 小时</strong>：一个完全没碰过 Godot 的人，从安装到跑起第一个可玩的 2D 小游戏</li>
+    <li><strong>技能集采纳率 &gt; 30%</strong>：在目标用户群（Reasonix / Cursor 用户）中，下载后一周内持续使用</li>
+    <li><strong>用户自助率 &gt; 70%</strong>：用户提问中，Agent 在不求助人类的情况下独立完成操作的比例</li>
+    <li><strong>NPS &gt; 40</strong>：首批用户净推荐值</li>
+  </ul>
+</section>
+
+<!-- 2. 用户画像 -->
+<section>
+  <h2>2. 用户画像</h2>
+
+  <h3>👤 画像 A：独立游戏作者 · Solo Dev</h3>
+  <table>
+    <tr><th>维度</th><th>说明</th></tr>
+    <tr><td>身份/场景</td><td>全职或业余独立开发者，会写代码（Python/JS/Go），想快速验证游戏创意</td></tr>
+    <tr><td>痛点</td><td>Godot 编辑器不熟悉，拖拽节点、调资源、连信号远不如写代码顺手；把时间花在学编辑器而非做游戏</td></tr>
+    <tr><td>使用频率</td><td>每日 / 每周密集使用</td></tr>
+    <tr><td>核心诉求</td><td>「我描述游戏逻辑，帮我搭好场景、写好脚本、配好资源路径，我只需要调参数和改文案」</td></tr>
+  </table>
+
+  <h3>👤 画像 B：编程 Agent 使用者 · AI Native Dev</h3>
+  <table>
+    <tr><th>维度</th><th>说明</th></tr>
+    <tr><td>身份/场景</td><td>重度依赖 AI 编程助手（Cursor/Windsurf/Reasonix）的开发者，把 Agent 当作主力开发工具</td></tr>
+    <tr><td>痛点</td><td>Agent 能写 <code>.gd</code> 脚本，但无法操控编辑器——创建节点、设置碰撞层、导入音效这些事 Agent 做不到，人得自己进编辑器做</td></tr>
+    <tr><td>使用频率</td><td>每次开发会话（每天多次）</td></tr>
+    <tr><td>核心诉求</td><td>「Agent 能完全操控 Godot 项目——创建/删除/修改场景、管理资源、运行调试、导出打包。我只需要在对话里说『加个跳跃功能』」</td></tr>
+  </table>
+
+  <h3>👤 画像 C：游戏设计学习者 · Student</h3>
+  <table>
+    <tr><th>维度</th><th>说明</th></tr>
+    <tr><td>身份/场景</td><td>在校学生或转行学习者，编程基础薄弱但想学游戏开发</td></tr>
+    <tr><td>痛点</td><td>官方文档和教程以编辑器操作为主，学起来慢；想先看到成果再理解原理</td></tr>
+    <tr><td>使用频率</td><td>每周数次</td></tr>
+    <tr><td>核心诉求</td><td>「用大白话描述一个游戏，Agent 帮我做出来，我边玩边看代码学」</td></tr>
+  </table>
+</section>
+
+<!-- 3. MVP 定义 -->
+<section>
+  <h2>3. MVP 定义</h2>
+
+  <h3>🥇 Must-have（MVP 必须包含）</h3>
+  <ul>
+    <li><span class="tag tag-mvp">P0</span> <strong>项目脚手架生成</strong> —— 一键创建 Godot 4.x 项目目录结构、<code>project.godot</code> 配置、默认场景</li>
+    <li><span class="tag tag-mvp">P0</span> <strong>场景文件（.tscn）生成与编辑</strong> —— 用文本方式创建/修改 2D 场景（节点树、Transform、Sprite、CollisionShape）</li>
+    <li><span class="tag tag-mvp">P0</span> <strong>GDScript 脚本生成与挂载</strong> —— 写 <code>.gd</code> 文件、自动挂载到场景节点、建立基础信号连接</li>
+    <li><span class="tag tag-mvp">P0</span> <strong>资源路径管理</strong> —— 自动处理纹理/音效/字体的导入路径，确保 Godot 资源面板可识别</li>
+    <li><span class="tag tag-mvp">P0</span> <strong>基础 2D 游戏模板</strong> —— 内置「平台跳跃」「打砖块」「点击收集」三个模板，用户可 Fork 修改</li>
+    <li><span class="tag tag-mvp">P1</span> <strong>Godot 命令行调用</strong> —— <code>godot --headless</code> 导出、运行测试、语法检查</li>
+    <li><span class="tag tag-mvp">P1</span> <strong>技能集文档 + 示例 Playbook</strong> —— Agent 可读的 API 说明 + 自然语言→操作步骤的映射示例</li>
+  </ul>
+
+  <h3>📅 Nice-to-have（一期后加）</h3>
+  <ul>
+    <li><span class="tag tag-nth">P2</span> 3D 场景支持（Spatial/Node3D、Mesh、Light、Camera 节点）</li>
+    <li><span class="tag tag-nth">P2</span> 动画（AnimationPlayer + AnimationTree 的脚本化创建）</li>
+    <li><span class="tag tag-nth">P2</span> TileMap 编辑器自动化（刷 TileSet、Layers、自动碰撞）</li>
+    <li><span class="tag tag-nth">P2</span> 资源管线（自动导入 Spritesheet 分割、音频转码 .ogg）</li>
+    <li><span class="tag tag-nth">P3</span> 多人游戏网络同步脚手架（RPC 配置、NetworkedSpawner）</li>
+    <li><span class="tag tag-nth">P3</span> 移动端导出 + 商店发布辅助（打包签名、图标生成）</li>
+  </ul>
+
+  <h3>🚫 明确不做什么</h3>
+  <ul>
+    <li><span class="tag tag-wont">不做</span> <strong>可视化编辑器替代品</strong> —— 我们不重写 Godot Editor UI。Agent 通过文件操作 + 命令行与 Godot 交互，用户仍可随时打开编辑器手动微调</li>
+    <li><span class="tag tag-wont">不做</span> <strong>美术资产生成</strong> —— 不生成图片/模型/音效。只管理资源引用路径</li>
+    <li><span class="tag tag-wont">不做</span> <strong>游戏逻辑引擎</strong> —— 不替代 Godot 的 Physics / Animation / Audio 运行时。只做「搭架子」</li>
+    <li><span class="tag tag-wont">不做</span> <strong>低代码拖拽界面</strong> —— 目标用户是「写代码的人 + AI Agent」，不需要图形化搭建</li>
+    <li><span class="tag tag-wont">不做</span> <strong>Godot 版本兼容</strong> —— MVP 锁定 Godot 4.x（当前最新稳定版），不向下兼容 3.x</li>
+  </ul>
+</section>
+
+<!-- 4. 2B / 2C 分析 -->
+<section>
+  <h2>4. 2B / 2C 分析</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>维度</th>
+        <th>🎯 To C（个人开发者）</th>
+        <th>🏢 To B（工作室 / 教育机构）</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>用户是谁</strong></td>
+        <td>独立开发者、AI 重度用户、游戏开发初学者</td>
+        <td>小型游戏工作室教学组、培训机构、Game Jam 组织方</td>
+      </tr>
+      <tr>
+        <td><strong>付费意愿</strong></td>
+        <td>中等——愿意为「节省时间」付费，但单价敏感（免费/低价更优）</td>
+        <td>高——如果能量化提升团队效率，愿意付年费</td>
+      </tr>
+      <tr>
+        <td><strong>决策链</strong></td>
+        <td>单人决策——自己觉得有用就下载</td>
+        <td>组长/讲师评估 → 试用 → 批量采购</td>
+      </tr>
+      <tr>
+        <td><strong>核心功能差异</strong></td>
+        <td>快速原型 + 模板 + Agent 自由操控</td>
+        <td>模板库 + 批量项目脚手架 + 培训演练沙盒 + 版本锁定（确保学生环境一致）</td>
+      </tr>
+      <tr>
+        <td><strong>获客渠道</strong></td>
+        <td>GitHub 开源 / X / Reddit / 独立开发者社区</td>
+        <td>直接 Outreach + 机构合作 + 案例白皮书</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>主次关系</h3>
+  <p><strong>To C 先行，To B 后置。</strong></p>
+  <p>
+    MVP 阶段完全面向个人开发者（To C）。技能集以开源/免费形式发布，积累社区口碑和模板生态。
+    当 C 端覆盖达到一定规模（GitHub Star &gt; 1k、Discord 社区 &gt; 500 人），自然会出现 B 端需求，
+    届时推出付费版（企业许可证 / 私有部署 / SLA 支持）。
+  </p>
+  <p>
+    <strong>功能分区</strong>：C 端核心是「自由 + 速度」——Agent 能做任何事；B 端额外需要「可控 + 可追溯」——操作日志、项目模板锁定、权限分角色。
+  </p>
+</section>
+
+<!-- 5. 设计理念 -->
+<section>
+  <h2>5. 设计理念</h2>
+
+  <h3>体验关键词</h3>
+  <p>
+    <span class="badge">Agent-Native</span>
+    <span class="badge">零摩擦</span>
+    <span class="badge">黑盒可选</span>
+  </p>
+  <ul>
+    <li><strong>Agent-Native（Agent 原生）</strong> —— 技能集的每个接口都是为 Agent 调用设计的：输入输出结构化、错误信息机器可读、操作幂等。人类可读的注释和文档是第二优先级。</li>
+    <li><strong>零摩擦（Zero Friction）</strong> —— 从「我有个想法」到「项目跑起来」不超过 3 条指令。不需要安装额外 GUI、不需要配置环境变量（除 Godot 路径外）。</li>
+    <li><strong>黑盒可选（Optional Transparency）</strong> —— 用户可以选择只看结果，也可以让 Agent 展示每一步创建的代码和场景文件。新手看结果，进阶用户审查过程。</li>
+  </ul>
+
+  <h3>核心交互原则</h3>
+  <ol>
+    <li><strong>自然语言入，完整项目出。</strong> 用户的每条游戏描述，Agent 应当能转化为一组对 Godot 项目文件的精确写入，而非返回「我建议你打开编辑器做 X」。</li>
+    <li><strong>可撤销与可预览。</strong> 每次操作前生成 diff，用户可批准/回滚。不盲目改动已有项目结构。</li>
+    <li><strong>场景即代码，代码即场景。</strong> <code>.tscn</code> 和 <code>.gd</code> 都是纯文本，Agent 视它们为同一层级的产物——不区分「搭场景」和「写逻辑」，统一用工具操作。</li>
+  </ol>
+
+  <h3>视觉风格方向</h3>
+  <p>
+    这是 Agent 技能集，不是用户界面产品。不需要 GUI 设计。<br>
+    唯一面向用户的「界面」是：
+  </p>
+  <ul>
+    <li>终端输出（操作日志）：灰底白字，<span style="color:var(--success)">绿色 ✓ 成功</span> / <span style="color:var(--danger)">红色 ✗ 失败</span> 高亮</li>
+    <li>项目文件变化：标准的 git diff 风格展示</li>
+    <li>模板代码：遵循 Godot 官方 GDScript 风格指南（<code>snake_case</code> 函数/变量、<code>PascalCase</code> 节点名）</li>
+  </ul>
+  <p>整体调性：<strong>专业、克制、可预测</strong>——让用户信任 Agent 生成的项目质量。</p>
+</section>
+
+<!-- 6. 风险 -->
+<section>
+  <h2>6. 风险（非技术）</h2>
+
+  <div class="risk-card market">
+    <h3>📉 市场风险</h3>
+    <p><strong>竞品分析：</strong> 目前没有直接竞品。间接竞品包括：</p>
+    <ul>
+      <li>Godot 官方教程 / 文档 —— 免费但靠人学，不是 Agent</li>
+      <li>GameMaker / RPG Maker —— 低代码但封闭生态，Agent 无法接入</li>
+      <li>AI 写代码（Claude 直接写 .gd）—— 缺乏场景编排和资源管理，只能写逻辑</li>
+    </ul>
+    <p><strong>风险：</strong> 市场太小众（Agent + Godot 的交集）——如果 Godot 本身用户基数不够大，技能集的使用场景会受限。<br>
+    <strong>缓解：</strong> Godot 4.x 发布后用户快速增长（Steam 调查占比已到 ~2-3%），且 AI 编程助手本身在高速扩张，两个曲线交叉点正在到来。</p>
+  </div>
+
+  <div class="risk-card ops">
+    <h3>⚙️ 运营风险</h3>
+    <ul>
+      <li><strong>Godot 版本碎片化：</strong> 4.0 → 4.1 → 4.2 → 4.3 节点/API 有破坏性变更。技能集需要紧跟每个小版本，否则生成的 .tscn 在新版打不开。</li>
+      <li><strong>合规 / 开源许可：</strong> Godot 本身是 MIT 许可。技能集生成的游戏代码归用户所有。但技能集自身如果用了 GDScript 代码片段做模板，需确保不引入传染性许可证。</li>
+      <li><strong>Agent 行为不可预测性：</strong> 用户可能用自然语言让 Agent 执行超出技能集设计范围的操作（如「生成一个 3D MMORPG」），导致 Agent 输出质量下降、用户失望。需要清晰的 Scope 文档和 graceful fallback 提示。</li>
+    </ul>
+  </div>
+
+  <div class="risk-card growth">
+    <h3>📈 增长风险</h3>
+    <p><strong>冷启动：</strong> 技能集在无社区、无模板、无案例的情况下发布，用户下载后不知道能做什么。</p>
+    <ul>
+      <li><strong>解法：</strong> 发布时自带 3 个完整游戏模板（平台跳跃、打砖块、点击收集），用户改改就能跑</li>
+      <li><strong>解法：</strong> 提供一段「从零开始的 5 分钟 Demo」视频/文字记录——用户看着 Agent 一步步生成一个完整小游戏</li>
+      <li><strong>解法：</strong> 在 Godot 社区（r/godot、Godot Discord）和 AI 编程社区（r/cursor、r/copilot）同步发布</li>
+    </ul>
+  </div>
+
+  <div class="risk-card monetize">
+    <h3>💰 变现路径</h3>
+    <p><strong>MVP 阶段：免费 + 开源</strong></p>
+    <ul>
+      <li>积累用户 → 积累模板库 → 积累品牌信任</li>
+      <li>通过 GitHub Sponsors / 爱发电 接受捐赠</li>
+    </ul>
+    <p><strong>后续变现（用户数达标后考虑）：</strong></p>
+    <ul>
+      <li><strong>企业许可证：</strong> 工作室/培训机构需要锁定版本、操作日志、批量项目分发，付费解锁</li>
+      <li><strong>高级模板市集：</strong> 社区贡献的高质量游戏模板，平台抽成 15-20%</li>
+      <li><strong>云构建管道：</strong> GitHub Action + Godot 导出打包，一键生成 Windows/macOS/Linux/Web 构建（按构建次数计费）</li>
+    </ul>
+    <p><strong>核心逻辑：</strong> 先让价值被感知，再谈收费。变现不能影响核心体验。</p>
+  </div>
+</section>
+
+<footer>
+  <p>📄 本文档仅描述 WHAT 与 WHY — 不包含技术方案。</p>
+  <p>后续由 pipeline 架构师角色读取本文档，转换为技术 PRD 与实现计划。</p>
+  <p>Godot Reasonix 技能集 · 产品设计文档 v1.0</p>
+</footer>
+
+</div>
+</body>
+</html>
