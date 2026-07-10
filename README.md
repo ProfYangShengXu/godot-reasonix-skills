@@ -1,116 +1,107 @@
-# 🍌 Godot Reasonix 技能集
+# Godot Reasonix Skills
 
-> **让 AI Agent 帮你做 Godot 游戏，你只管想玩法。**
+让 AI 编程 Agent 操控 Godot 引擎，辅助游戏开发。
 
 [![Tests](https://github.com/ProfYangShengXu/godot-reasonix-skills/actions/workflows/test.yml/badge.svg)](https://github.com/ProfYangShengXu/godot-reasonix-skills/actions/workflows/test.yml)
 ![Godot](https://img.shields.io/badge/Godot-4.7-478cbf?logo=godot-engine&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178c6?logo=typescript&logoColor=white)
 
----
+## 概述
 
-## 🎯 这玩意儿是干嘛的？
+一套工具集，让编程 Agent（Cursor、Windsurf、Reasonix 等）能够通过命令行和文件操作来创建和管理 Godot 4.x 项目。用户用自然语言描述游戏想法，Agent 自动完成项目搭建、场景编排、脚本编写和资源管理。
 
-你有没有过这种经历：
+不需要手动操作 Godot 编辑器即可完成基础项目搭建。
 
-- 🤔 "我想做个游戏，但 Godot 编辑器看着就头大"
-- 😤 "我会写代码，但不想学拖拽节点树"
-- 🤖 "如果能让 AI 直接帮我搭 Godot 项目就好了……"
-
-**这就是答案。**
-
-一套让编程 Agent（Cursor / Windsurf / Reasonix / 你家猫）操控 Godot 引擎的工具集。
-你说人话，Agent 干活，Godot 出游戏。
-
-## 🚀 三秒上手
+## 快速开始
 
 ```bash
-# 1. 拿一个现成模板
-npx tsx tools/template_library.ts fork platformer ./my-game "我的第一个游戏"
+# 1. 从模板创建一个平台跳跃游戏
+npx tsx tools/template_library.ts fork platformer ./my-game "MyGame"
 
-# 2. 用 Godot 打开
-# （你的 Godot 安装路径在这里替换）
+# 2. 用 Godot 打开项目
 godot my-game/project.godot
 
-# 3. 按 F5，你已经会了
+# 3. 按 F5 运行
 ```
 
-## 🧰 工具箱（7 个模块，18 个工具）
+## 工具模块
 
-| 模块 | 干嘛的 | 工具 |
-|------|--------|------|
-| 🏗️ **Scaffolder** | 创建项目骨架 | `ScaffoldProject` |
-| 🎬 **Scene Generator** | 搭场景 | `CreateScene` `AddNode` `RemoveNode` `SetNodeProperty` |
-| 📜 **Script Manager** | 写脚本 | `CreateScript` `AttachScript` `ConnectSignal` |
-| 🗂️ **Resource Resolver** | 管资源 | `ImportResource` `ResolvePath` |
-| 📦 **Template Library** | 抄作业 | `ListTemplates` `ForkTemplate` `CustomizeTemplate` |
-| 🔧 **Godot CLI Bridge** | 调引擎 | `RunGodot` `CheckGodotVersion` |
-| 📖 **Documentation** | 看说明书 | `GetSkillDoc` `FindPlaybook` `GetScopeBoundary` |
+| 模块 | 功能 | 工具函数 |
+|------|------|---------|
+| **Project Scaffolder** | 创建 Godot 项目骨架 | `ScaffoldProject` |
+| **Scene Generator** | 生成和编辑 .tscn 场景文件 | `CreateScene`, `AddNode`, `RemoveNode`, `SetNodeProperty` |
+| **Script Manager** | 生成 GDScript 并绑定到场景 | `CreateScript`, `AttachScript`, `ConnectSignal` |
+| **Resource Resolver** | 管理纹理/音频/字体等资源路径 | `ImportResource`, `ResolvePath` |
+| **Template Library** | 内置 3 个游戏模板，可 fork 定制 | `ListTemplates`, `ForkTemplate`, `CustomizeTemplate` |
+| **Godot CLI Bridge** | 封装 godot 命令行调用 | `RunGodot`, `CheckGodotVersion` |
+| **Documentation** | Agent 可读的 API 文档和示例 | `GetSkillDoc`, `FindPlaybook`, `GetScopeBoundary` |
 
-## 🎮 内置模板
+## 内置模板
 
-| 模板 | 说明 | 难度 |
-|------|------|------|
-| `platformer` | 🏃 平台跳跃 — 左右跑 + 跳 | 中 |
-| `breakout` | 🧱 打砖块 — 挡板接球碎砖 | 中 |
-| `clicker` | 🖱️ 点击收集 — 点点点拿分 | 低 |
+| 模板 | 描述 | 包含内容 |
+|------|------|---------|
+| `platformer` | 2D 平台跳跃游戏 | CharacterBody2D 角色、物理碰撞、跳跃机制 |
+| `breakout` | 经典打砖块游戏 | 挡板控制、小球物理、砖块碰撞、计分系统 |
+| `clicker` | 点击收集游戏 | 随机生成物品、点击交互、计时消失机制 |
 
-一键 fork：
 ```bash
-npx tsx tools/template_library.ts fork clicker ./my-clicker "我的点击游戏"
+# 列出可用模板
+npx tsx tools/template_library.ts list
+
+# Fork 模板到新项目
+npx tsx tools/template_library.ts fork clicker ./my-clicker "MyClicker"
 ```
 
-## 🧪 质量声明
+## 测试
+
+项目包含四层测试，覆盖单元测试到 Godot 真实环境验收：
 
 ```
-单元测试:  56 ✅  (覆盖每个工具的每条代码路径)
-集成测试:   4 ✅  (M1+M2+M3+M4 组合协作)
-场景测试:   2 ✅  (完整端到端管线)
-验收测试:   7 ✅  (Godot 4.7 真实环境加载验证)
-─────────────────────────────────────
-总计:      69 ✅  全部通过，不跟你开玩笑
+tests/
+├── u/          # 单元测试（56 用例）
+├── i/          # 集成测试（4 用例）
+├── s/          # 场景测试（2 用例）
+└── a/          # 验收测试（7 用例，需 Godot 4.x 环境）
 ```
 
-## 🐛 踩坑记录
+```bash
+npm test        # 运行全部测试
+npm run test:u  # 仅单元测试
+npm run test:a  # 仅验收测试（需要 Godot 4.x）
+```
 
-想知道我们是怎么把 Godot 输入映射搞炸又修好的？见 [`docs/badcases/`](docs/badcases/)：
-
-- 🔥 `[input]` 段在 `project.godot` 里写什么格式都会被 Godot 4.7 吃绑定
-- 🔥 `CollisionShape2D.shape` 要的是 `SubResource` 不是 `Vector2`
-- 🔥 Camera2D 跟在小人身上 + 纯灰背景 = 你以为游戏卡了
-- 🔥 `ext_resource` 上的 uid 别手写，让 Godot 自己生成
-
-## 🏗️ 项目结构
+## 项目结构
 
 ```
-├── tools/              # 7 个工具模块
-│   ├── scaffolder.ts
-│   ├── scene_generator.ts
-│   ├── script_manager.ts
-│   ├── resource_resolver.ts
-│   ├── template_library.ts
-│   ├── godot_cli.ts
-├── templates/          # 3 个游戏模板
+├── tools/                  # 工具模块
+├── templates/              # 游戏模板
 │   ├── platformer/
 │   ├── breakout/
 │   └── clicker/
-├── tests/              # 4 层测试
-│   ├── u/              # 单元测试 (56)
-│   ├── i/              # 集成测试 (4)
-│   ├── s/              # 场景测试 (2)
-│   └── a/              # 验收测试 (7)
+├── tests/                  # 测试
 ├── docs/
-│   ├── product/        # 产品 PRD
-│   ├── prd/            # 技术 PRD
-│   ├── playbooks/      # 使用示例
-│   └── reference/      # Godot 格式参考
-├── SKILL.md            # 技能集入口
+│   ├── product/            # 产品设计文档
+│   ├── prd/                # 技术 PRD
+│   ├── playbooks/          # 使用示例
+│   ├── reference/          # Godot 格式参考
+│   └── badcases/           # 踩坑记录
+├── wasd-player/            # 示例项目
+├── SKILL.md                # 技能集入口文档
 └── package.json
 ```
 
-## 📜 许可证
+## 前置依赖
 
-MIT — 做啥都行，别找我赔钱就行。
+- Node.js 18+
+- Godot 4.x（用于验收测试和运行生成的项目）
 
----
+## 文档
 
-**Godot Reasonix 技能集** — *"我不会 Godot，但我的 Agent 会。"*
+- [技能集入口文档](SKILL.md) — 能力边界、工具清单、快速上手
+- [产品设计文档](docs/product/godot-reasonix-product-prd.html) — 产品定位与设计理念
+- [技术 PRD](docs/prd/v1/prd.yaml) — 模块接口定义与验收标准
+- [Godot 格式参考](docs/reference/godot-4-format-reference.md) — 官方文档整合
+
+## 许可证
+
+MIT
