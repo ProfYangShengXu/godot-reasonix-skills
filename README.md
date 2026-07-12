@@ -1,6 +1,8 @@
 # Godot Reasonix Skills
 
-让 AI 编程 Agent 操控 Godot 引擎，辅助游戏开发。
+让 AI 编程 Agent 操控 Godot 引擎，辅助游戏开发
+可 配套reasonix插件
+https://github.com/ProfYangShengXu/bobanana4.0.git 使用
 
 [![Tests](https://github.com/ProfYangShengXu/godot-reasonix-skills/actions/workflows/test.yml/badge.svg)](https://github.com/ProfYangShengXu/godot-reasonix-skills/actions/workflows/test.yml)
 ![Godot](https://img.shields.io/badge/Godot-4.7-478cbf?logo=godot-engine&logoColor=white)
