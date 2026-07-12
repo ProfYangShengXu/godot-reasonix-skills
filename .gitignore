@@ -5,3 +5,7 @@ dist/
 *.godot.uid
 .DS_Store
 *.log
+debug-sessions/
+input-scripts/
+.reasonix/truncated-results/
+.reasonix/desktop-*

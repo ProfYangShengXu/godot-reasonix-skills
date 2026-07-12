@@ -15,6 +15,7 @@ func _ready() -> void:
 		randf_range(50, 750),
 		randf_range(50, 550)
 	)
+	print("LOG:INFO:Collectible spawned at (", position.x, ", ", position.y, ")")
 	
 	# Animate appearance
 	scale = Vector2.ZERO
@@ -26,6 +27,7 @@ func _process(delta: float) -> void:
 	time_left -= delta
 	if time_left <= 0:
 		# Fade out and remove
+		print("LOG:INFO:Collectible expired at (", position.x, ", ", position.y, ")")
 		var tween: Tween = create_tween()
 		tween.tween_property(self, "modulate", Color.TRANSPARENT, 0.3)
 		tween.tween_callback(queue_free)
@@ -34,6 +36,7 @@ func _process(delta: float) -> void:
 
 func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		print("LOG:INFO:Collectible clicked, value=" + str(value))
 		collected.emit(value)
 		# Collect animation
 		var tween: Tween = create_tween()

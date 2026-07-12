@@ -1,19 +1,18 @@
 prd:
-  version: 1
-  product_prd: docs/product/godot-reasonix-product-prd.html
+  version: 2
+  product_prd: docs/product/godot-reasonix-debugger-product-prd.html
 
   # ─── 模块划分说明 ───
-  # 按「能力边界」拆为 7 个模块，每个模块对应 Agent 可调用的一组 Skill Tool。
-  # M1-M4 是底层原子能力，M5 是组合产物，M6 是 CLI 封装，M7 是文档。
+  # 原有 M1-M7 基础上新增 M8-M11，按「能力边界」拆分。
+  # M8-M9 是底层原子能力，M10 是组合编排层，M11 是辅助脚本。
   #
   # 依赖方向：高层 → 接口层 ← 低层实现（依赖倒置）
-  #   M5 ─→ M1 M2 M3 M4
-  #   └────→ M6 (测试模板)
-  #   M7 (无代码依赖)
+  #   M10 ─→ M6 M8 M9
+  #   M11 (无代码依赖，纯 GDScript 模板)
   #
   # 2+1 选择：按模块拆 (a)
   # 理由：每个模块职责单一、边界清晰、可独立测试、可独立复用。
-  #        Agent 可以按需调用 M1 单独创建项目，也可以调用 M5 直接 fork 模板。
+  #        M8 可以单独用来做日志分析，M9 可单独做输入模拟。
 
   modules:
     # ── M1: 项目脚手架 ──
@@ -534,6 +533,392 @@ prd:
 
       depends_on: []
 
+    # ── M8: 日志捕获与解析器 ──
+    - id: M8
+      name: Log Capture & Parser
+      summary: 从 godot 运行时捕获 stdout/stderr，解析为结构化日志条目
+      rationale: >
+        Agent 需要"看到"游戏运行时发生了什么。
+        本模块捕获 godot --headless 运行的 stdout/stderr，
+        解析 GDScript print() 输出和 Godot 引擎错误信息，
+        将其转换为结构化、机器可读的日志条目（含错误类型、文件路径、行号）。
+        是调试流水线的数据入口。
+
+      interfaces:
+        - name: CaptureLogs
+          description: 运行 godot 并捕获完整输出，返回原始日志 + 结构化条目
+          input:
+            project_root: string
+            timeout_sec:
+              type: int
+              default: 30
+            godot_args:
+              type: array
+              desc: 额外的 godot CLI 参数（如 --script run_test.gd）
+              optional: true
+          output:
+            raw_stdout: string
+            raw_stderr: string
+            entries:
+              type: array
+              desc: "结构化日志条目 [{ level, message, file, line, timestamp }]"
+            summary:
+              type: object
+              desc: "{ total: number, errors: number, warnings: number, infos: number }"
+            exit_code: int
+            error:
+              type: string
+              optional: true
+          side_effects:
+            - 调用 godot 进程
+
+        - name: ParseLogText
+          description: 解析原始日志文本，返回结构化条目列表
+          input:
+            raw_text: string
+            source:
+              type: string
+              enum: ["stdout", "stderr"]
+          output:
+            entries:
+              type: array
+              desc: |
+                [{
+                  level: "error" | "warning" | "info" | "debug",
+                  message: string,
+                  file: string,       # 关联的 .gd 文件路径（如果有）
+                  line: number,       # 行号（如果有）
+                  timestamp: number,  # 相对时间戳 ms
+                  raw: string         # 原始行
+                }]
+            error:
+              type: string
+              optional: true
+
+        - name: SummarizeLogs
+          description: 生成日志摘要报告（LLM 友好的结构化格式）
+          input:
+            entries:
+              type: array
+            include_raw:
+              type: bool
+              default: false
+          output:
+            summary:
+              type: object
+              desc: |
+                {
+                  stats: { total, errors, warnings },
+                  top_errors: [{ file, line, count, example }],
+                  timeline: [{ ms, event }],
+                  diagnosis_hints: [string]
+                }
+
+      acceptance:
+        - id: M8-A1
+          desc: 正常路径 — 运行含 print() 的测试脚本，正确捕获 print 内容到结构化 entries
+          check: "CaptureLogs(project_root, {godot_args:['--script','test_print.gd']}) → entries 包含 level=info 的 print 内容"
+          layer: U
+        - id: M8-A2
+          desc: 异常路径 — 运行含语法错误的脚本，ParseLogText 正确识别 error 级别和文件行号
+          check: "ParseLogText(stderr_with_error) → entries[0].level === 'error' && 非空 file && 非空 line"
+          layer: U
+        - id: M8-A3
+          desc: 边界路径 — 日志量超过 10000 行 → SummarizeLogs 正确聚合而非截断丢失
+          check: "SummarizeLogs(10000+ entries) → summary.stats.total === entries.length"
+          layer: I
+        - id: M8-A4
+          desc: 对抗路径 — 日志中包含非 ASCII 中文和特殊字符 → 正确编码输出
+          check: "ParseLogText('测试错误: 角色碰撞检测失败') → entries[0].message 包含中文"
+          layer: U
+
+      risks:
+        - dimension: 监控
+          desc: 日志风暴（每帧输出）可能撑爆内存，需流式处理 + 行数上限保护
+        - dimension: 容错
+          desc: Godot 错误格式在不同版本间有差异（4.0 vs 4.2），解析器需版本感知
+
+      depends_on: [M6]
+
+    # ── M9: 输入模拟器 ──
+    - id: M9
+      name: Input Simulator
+      summary: 通过操作系统级 API 向运行中的 Godot 游戏模拟键盘输入
+      rationale: >
+        Agent 需要能"玩"游戏来复现 bug。
+        本模块通过平台的输入模拟 API（Windows SendKeys / Linux xdotool / macOS osascript）
+        向 Godot 游戏窗口发送按键事件。
+        支持键盘按键序列和按键保持/释放。
+        注意：这需要 Godot 在非 headless 模式下运行或使用特殊输入插件。
+
+      interfaces:
+        - name: SimulateKeySequence
+          description: 模拟按键序列，支持按键按下、保持、释放
+          input:
+            keys:
+              type: array
+              desc: |
+                [{ action: "press"|"release"|"tap", key: string, delay_ms: number }]
+            window_title:
+              type: string
+              desc: 目标窗口标题（用于查找窗口）
+              optional: true
+            godot_project:
+              type: string
+              desc: 如果指定，先启动 godot 项目再模拟输入
+              optional: true
+          output:
+            executed_actions: int
+            error:
+              type: string
+              optional: true
+          side_effects:
+            - 向操作系统发送键盘事件
+            - 可能启动 godot 进程
+
+        - name: CreateInputScript
+          description: 创建可复用的输入脚本（JSON 格式的按键序列）
+          input:
+            sequence:
+              type: array
+              desc: 按键序列定义
+            name:
+              type: string
+              desc: 脚本名称用于存储和引用
+          output:
+            script_id: string
+            error:
+              type: string
+              optional: true
+          side_effects:
+            - 写入 input-scripts/<name>.json
+
+        - name: ReplayInputScript
+          description: 重放已保存的输入脚本
+          input:
+            script_id: string
+            godot_project:
+              type: string
+              optional: true
+          output:
+            executed_actions: int
+            error:
+              type: string
+              optional: true
+
+      acceptance:
+        - id: M9-A1
+          desc: 正常路径 — tap 'Space' 后游戏角色跳跃（日志中可查到 jump 输出）
+          check: "SimulateKeySequence([{action:'tap',key:'Space'}]) → executed_actions === 1"
+          layer: U
+        - id: M9-A2
+          desc: 异常路径 — 不存在的按键名 → 返回错误
+          check: "SimulateKeySequence([{action:'tap',key:'INVALID_KEY'}]) → error 非空"
+          layer: U
+        - id: M9-A3
+          desc: 边界路径 — 长序列 100 个按键动作 → 全部执行成功
+          check: "SimulateKeySequence(long_sequence) → executed_actions === 100"
+          layer: I
+        - id: M9-A4
+          desc: 集成路径 — 启动项目 + 输入序列 + 捕获日志 = 日志包含按键对应的行为
+          check: "CreateInputScript + ReplayInputScript → 结合 M8 日志验证游戏响应"
+          layer: I
+
+      risks:
+        - dimension: 安全
+          desc: 输入模拟不能用于非 Godot 窗口，需做窗口标题校验
+        - dimension: 技术债
+          desc: 跨平台输入模拟方案不同（Win/Linux/macOS），需维护三套实现
+        - dimension: 容错
+          desc: Godot 窗口可能未及时获得焦点导致按键丢失，需要重试机制
+
+      depends_on: [M6]
+
+    # ── M10: 调试编排器 ──
+    - id: M10
+      name: Debug Orchestrator
+      summary: 编排完整的调试会话——运行游戏、模拟输入、捕获日志、LLM 分析
+      rationale: >
+        产品 PRD 核心要求：「一次命令跑完全流程」。
+        本模块将 M6（启动游戏）+ M8（捕获日志）+ M9（输入模拟）组合为
+        一个高阶接口。同时负责调用 LLM 分析日志 + 代码上下文，
+        输出问题定位报告。是 Agent 调试的入口点。
+
+      interfaces:
+        - name: RunDebugSession
+          description: 运行一次完整的调试会话（启动 → 输入模拟 → 抓日志 → 报告）
+          input:
+            project_root: string
+            input_script:
+              type: string
+              desc: 输入脚本 ID 或内联序列
+              optional: true
+            duration_sec:
+              type: int
+              desc: 游戏运行时长（秒）
+              default: 10
+            llm_analysis:
+              type: bool
+              desc: 是否调用 LLM 分析日志
+              default: true
+          output:
+            log_summary: object
+            session_id: string
+            diagnosis:
+              type: object
+              desc: "LLM 分析报告（如果启用）"
+              optional: true
+            error:
+              type: string
+              optional: true
+          side_effects:
+            - 调用 godot 进程
+            - 可能调用 LLM API
+            - 保存会话记录到 debug-sessions/<session_id>.json
+
+        - name: AnalyzeLogsWithLLM
+          description: 将日志 + 代码上下文发送给 LLM 分析，返回问题定位
+          input:
+            log_entries:
+              type: array
+            project_root: string
+            relevant_files:
+              type: array
+              desc: 可选的指定文件分析范围
+              optional: true
+          output:
+            diagnosis:
+              type: object
+              desc: |
+                {
+                  root_cause: string,
+                  severity: "critical"|"major"|"minor",
+                  affected_file: string,
+                  affected_line: number,
+                  suggested_fix: string,
+                  confidence: number  # 0-1
+                }
+            error:
+              type: string
+              optional: true
+
+        - name: ListDebugSessions
+          description: 列出历史调试会话记录
+          input:
+            project_root:
+              type: string
+              optional: true
+            limit:
+              type: int
+              default: 10
+          output:
+            sessions:
+              type: array
+              desc: "[{ session_id, timestamp, project, error_count, status }]"
+
+      acceptance:
+        - id: M10-A1
+          desc: 正常路径 — 对已知有 bug 的项目运行调试会话，诊断报告非空且指向正确文件
+          check: "RunDebugSession({project_root:'/tmp/buggy_project', llm_analysis:true}) → diagnosis.affected_file 非空"
+          layer: I
+        - id: M10-A2
+          desc: 异常路径 — 项目路径不存在 → 返回显式错误
+          check: "RunDebugSession({project_root:'/tmp/nonexistent'}) → error 包含'项目不存在'"
+          layer: U
+        - id: M10-A3
+          desc: 边界路径 — 无输入脚本仅运行 3 秒 → 正常捕获启动日志
+          check: "RunDebugSession({project_root:'/tmp/proj', duration_sec:3}) → log_summary 非空"
+          layer: U
+        - id: M10-A4
+          desc: 完整验证 — 调试会话识别出模板项目中的植入 bug（如缺失 CollisionShape）
+          check: "植入已知 bug → RunDebugSession → diagnosis.root_cause 提到缺失碰撞体"
+          layer: S
+
+      risks:
+        - dimension: 灰度
+          desc: LLM 分析可能产生幻觉，需要"低置信度时提示用户确认"的降级策略
+        - dimension: 熔断
+          desc: LLM API 调用可能超时或失败，需 graceful fallback（仅返回日志摘要）
+        - dimension: 安全
+          desc: 日志中可能包含用户敏感信息（如 API key 被 print 出来），LLM 分析前需脱敏
+
+      depends_on: [M6, M8, M9]
+
+    # ── M11: GDScript 日志工具 ──
+    - id: M11
+      name: GDScript Log Utilities
+      summary: 提供结构化日志的 GDScript 模板和约定，供游戏脚本引用
+      rationale: >
+        产品 PRD 要求提供预制的日志模板/宏。
+        本模块提供可直接复制进项目的 .gd 脚本模板，
+        包含 log_info / log_warn / log_error 函数，
+        统一输出格式为 "LOG:[LEVEL]:[message]"，
+        方便 M8 的 ParseLogText 精准解析。
+        这是纯模板，无运行时依赖。
+
+      interfaces:
+        - name: GenerateLogScript
+          description: 生成 log_utils.gd 脚本内容
+          input:
+            project_root:
+              type: string
+              desc: 写入目标（可选，不传则返回文本）
+              optional: true
+            log_level:
+              type: string
+              enum: ["verbose", "normal", "minimal"]
+              default: "normal"
+          output:
+            script_content: string
+            script_path:
+              type: string
+              optional: true
+            error:
+              type: string
+              optional: true
+          side_effects:
+            - 如果指定 project_root，写入 scripts/log_utils.gd
+
+        - name: InjectLogStatements
+          description: 向现有的 .gd 文件中注入日志语句（在关键生命周期函数中添加 print）
+          input:
+            file_path: string
+            inject_points:
+              type: array
+              desc: |
+                [{ function: "_ready"|"_process"|"_physics_process"|"custom_func",
+                   message: string,
+                   level: "info"|"warn"|"error" }]
+          output:
+            modified: bool
+            error:
+              type: string
+              optional: true
+          side_effects:
+            - 修改 .gd 文件
+
+      acceptance:
+        - id: M11-A1
+          desc: 正常路径 — 生成 log_utils.gd 内容包含 log_info/log_warn/log_error 三个函数
+          check: "GenerateLogScript() → script_content 包含 'func log_info' 'func log_warn' 'func log_error'"
+          layer: U
+        - id: M11-A2
+          desc: 异常路径 — 向不存在的文件 InjectLogStatements → 返回错误
+          check: "InjectLogStatements('nonexistent.gd', [...]) → error 非空"
+          layer: U
+        - id: M11-A3
+          desc: 集成路径 — InjectLogStatements 后运行游戏，M8 能正确捕获格式化日志
+          check: "InjectLogStatements → CaptureLogs → entries 包含对应级别的 LOG: 条目"
+          layer: I
+
+      risks:
+        - dimension: 运维
+          desc: 模板需与 Godot 4.x GDScript 语法兼容，但基本函数不依赖版本特性，风险低
+        - dimension: 监控
+          desc: 无（纯文本模板，不涉及运行时风险）
+
+      depends_on: []
+
   # ── 架构决策记录 ──
   architecture_decisions:
     - id: ADR-1
@@ -550,3 +935,40 @@ prd:
       title: 版本锁定 Godot 4.x，不兼容 3.x
       context: Godot 3.x 与 4.x 的 .tscn 格式、GDScript 语法、API 不兼容。
       decision: MVP 仅支持 Godot 4.x。检测到 3.x 时提示升级。
+
+    - id: ADR-3
+      title: 输入模拟采用平台 API 而非 Godot 插件
+      context: >
+        Godot 没有官方的 --headless 输入模拟支持。
+        第三方输入插件（如 InputHelper）需要手动安装且在 headless 模式下不可用。
+      decision: MVP 使用操作系统级输入模拟 API（Windows SendKeys、Linux xdotool、macOS osascript）。
+                P2 阶段再看是否有 Godot 内置方案。
+      consequences:
+        - 优点：不需要修改 Godot 项目本身，任何 Godot 游戏都能用
+        - 缺点：跨平台维护成本高、需要窗口焦点管理
+
+    - id: ADR-4
+      title: LLM 分析可选、可降级
+      context: LLM API 调用有成本、有延迟、可能失败。不能将 LLM 分析做成硬依赖。
+      decision: M10 的 LLM 分析默认启用但可关闭。
+                LLM 调用失败时 graceful fallback 到结构化日志摘要。
+      consequences:
+        - 优点：离线可用、零成本运行基础调试
+        - 缺点：LLM 诊断需要用户自行配置 API key
+
+    - id: ADR-5
+      title: M8 解析器采用正则 + 行模式而非 AST
+      context: Godot 日志输出格式是半结构化的文本行，没有 Parsing 库可复用。
+      decision: 使用正则模式匹配逐行解析（Godot 错误格式、print() 输出、GDScript traceback）。
+                不构建 AST 级别的理解（YAGNI）。
+      consequences:
+        - 优点：实现快速、轻量、可增量改进
+        - 缺点：Godot 版本间日志格式变化时需要更新正则
+
+    - id: ADR-6
+      title: 调试会话按项目本地存储
+      context: 调试会话记录包含日志及分析结果，可能包含敏感信息。
+      decision: 会话记录存储在项目目录下的 debug-sessions/ 目录中（已 .gitignore）。
+      consequences:
+        - 优点：会话与项目绑定、不跨项目污染、自然"清除"（删除项目即删除会话）
+        - 缺点：不能跨设备共享会话记录

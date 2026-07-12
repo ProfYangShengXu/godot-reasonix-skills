@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Godot Reasonix 技能集 — 技术架构文档</title>
+<title>Godot Reasonix 调试与测试模块 — 技术架构文档</title>
 <style>
   :root {
     --bg: #f8f9fa;
@@ -28,7 +28,7 @@
   .container { max-width: 960px; margin: 0 auto; }
 
   header {
-    background: linear-gradient(135deg, #0f172a 0%, #2563eb 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #dc2626 100%);
     color: white;
     padding: 2.5rem 2rem;
     border-radius: 16px;
@@ -37,6 +37,16 @@
   header h1 { font-size: 1.8rem; }
   header .subtitle { font-size: 1rem; opacity: .8; margin-top: .3rem; }
   header .meta { margin-top: 1rem; font-size: .85rem; opacity: .6; }
+  header .tag-new {
+    display: inline-block;
+    background: #fbbf24;
+    color: #1e293b;
+    font-size: .75rem;
+    font-weight: 700;
+    padding: .15rem .5rem;
+    border-radius: 4px;
+    margin-left: .5rem;
+  }
 
   section {
     background: var(--card);
@@ -78,6 +88,15 @@
   .badge-p0 { background: #d4edda; color: #155724; }
   .badge-p1 { background: #fff3cd; color: #856404; }
   .badge-dep { background: #e8f0fe; color: #2563eb; }
+  .badge-new { background: #fef3c7; color: #92400e; }
+
+  .module-card .iface-list { margin-top: .6rem; font-size: .9rem; }
+  .module-card .iface-list code {
+    background: #f1f5f9;
+    padding: .1rem .4rem;
+    border-radius: 3px;
+    font-size: .85rem;
+  }
 
   table {
     width: 100%;
@@ -119,6 +138,16 @@
 
   .risk-table td:first-child { font-weight: 600; white-space: nowrap; }
 
+  .flow-diagram {
+    background: #f1f5f9;
+    padding: 1.2rem;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: .85rem;
+    line-height: 2;
+    overflow-x: auto;
+  }
+
   footer {
     text-align: center;
     color: var(--text-secondary);
@@ -138,10 +167,11 @@
 <div class="container">
 
 <header>
-  <h1>🏗️ Godot Reasonix 技能集 — 技术架构</h1>
-  <div class="subtitle">基于产品 PRD 的结构化技术方案 — 供 pipeline 开发角色实现</div>
+  <h1>🏗️ Godot Reasonix 调试与测试模块 — 技术架构</h1>
+  <div class="subtitle">基于产品 PRD 的结构化技术方案 — 新增 M8~M11</div>
   <div class="meta">
-    v1.0 · 架构师产出一期 · 依赖 docs/product/godot-reasonix-product-prd.html
+    v2.0 · 架构师产出一期 · 依赖 docs/product/godot-reasonix-debugger-product-prd.html
+    <span class="tag-new">NEW</span>
   </div>
 </header>
 
@@ -149,131 +179,170 @@
 <section>
   <h2>1. 架构总览</h2>
 
-  <h3>核心思路</h3>
+  <h3>核心理念</h3>
   <p>
-    技能集不是一个运行时服务，而是一组 <strong>Reasonix Skill Tool</strong> 定义 + 一套 <strong>文件操作库</strong>。
-    Agent 在 Reasonix 环境中加载本技能集后，获得 7 个模块约 15 个工具接口。
-    用户说自然语言 → Agent 规划 → 调用工具 → 文件写入 + Godot CLI 验证 → 项目就绪。
+    在原有技能集（M1-M7）的基础上，新增 <strong>4 个模块</strong> 将技能集从
+    <strong>「单向编码管道」</strong>升级为 <strong>「写 → 跑 → 测 → 修」的调试闭环</strong>。
   </p>
+  <p>
+    新模块不改变原有 M1-M7 的任何接口。它们作为<strong>平行的新能力层</strong>，
+    通过 M6（Godot CLI Bridge）与原有模块对接，保持架构整洁。
+  </p>
+
+  <h3>调试闭环十步</h3>
+  <div class="flow-diagram">
+  ┌──────────────────────────────────────────────────────────────┐
+  │                    Agent 调试闭环                              │
+  ├──────────────────────────────────────────────────────────────┤
+  │                                                              │
+  │  ① 用户描述问题（自然语言）                                     │
+  │  ② Agent 解析 → 调用 M10 RunDebugSession                       │
+  │  ③ M10 → M6 启动 godot --headless                              │
+  │  ④ M10 → M9 向游戏窗口发送按键序列（WASD/空格/方向键）           │
+  │  ⑤ M10 → M8 捕获 stdout/stderr → 解析为结构化条目              │
+  │  ⑥ M8 关联错误到特定 .gd 文件 + 行号                           │
+  │  ⑦ M10 → 调用 LLM 分析日志 + 代码片段                          │
+  │  ⑧ LLM 输出诊断报告（根因 + 文件 + 行号 + 修复建议）             │
+  │  ⑨ Agent 根据诊断修改 .gd / .tscn 文件                         │
+  │  ⑩ 重新调用 RunDebugSession 验证修复 → 确认 ✓ / 仍有问题 → 回 ④│
+  │                                                              │
+  └──────────────────────────────────────────────────────────────┘
+  </div>
 
   <h3>系统边界</h3>
   <pre style="background:#f1f5f9;padding:1rem;border-radius:8px;font-size:.85rem;">
 
-  ┌──────────────────────────────────────────┐
-  │             用户 (自然语言)                │
-  └──────────┬───────────────────────────────┘
-             │ "帮我做个平台跳跃游戏"
-  ┌──────────▼───────────────────────────────┐
-  │          Agent (Reasonix 运行时)           │
-  │  ┌─────────────────────────────────────┐  │
-  │  │   Godot Reasonix 技能集 (7 模块)     │  │
-  │  │  ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐   │  │
-  │  │  │ M1│ │ M2│ │ M3│ │ M4│ │ M6│   │  │
-  │  │  └─┬─┘ └─┬─┘ └─┬─┘ └─┬─┘ └─┬─┘   │  │
-  │  │    └──┬───┘     │     │      │     │  │
-  │  │       └────┬────┘     │      │     │  │
-  │  │          ┌─▼─┐       │      │     │  │
-  │  │          │ M5│       │      │     │  │
-  │  │          └───┘       │      │     │  │
-  │  │          ┌───┐       │      │     │  │
-  │  │          │ M7│       │      │     │  │
-  │  │          └───┘       │      │     │  │
-  │  └─────────────────────────────────────┘  │
-  └──────────┬───────────────────────────────┘
-             │ 文件写入 (.tscn / .gd / project.godot)
-             │ CLI 调用 (godot --headless ...)
-  ┌──────────▼───────────────────────────────┐
-  │    目标: Godot 4.x 项目目录               │
-  │  scenes/  scripts/  assets/  project.godot│
-  └──────────────────────────────────────────┘
+  ┌──────────────────────────────────────────────────┐
+  │                 用户 (自然语言)                    │
+  │ "角色跳起来会卡在地板里"                           │
+  └────────────────┬─────────────────────────────────┘
+                   │
+  ┌────────────────▼─────────────────────────────────┐
+  │           Agent (Reasonix 运行时)                 │
+  │                                                   │
+  │  原有模块 (M1-M7)        新增模块 (M8-M11)        │
+  │  ┌───┐┌───┐┌───┐      ┌───────────┐             │
+  │  │ M1││ M5││ M7│      │ M10 调试  │             │
+  │  └─┬─┘└───┘└───┘      │ 编排器    │             │
+  │  ┌─▼─┐┌───┐┌───┐      └─────┬─────┘             │
+  │  │ M2││ M4││ M6│◄───────┐   │                   │
+  │  └─┬─┘└───┘└───┘        │   │                   │
+  │  ┌─▼─┐                   │   │                   │
+  │  │ M3│                   │   │                   │
+  │  └───┘                   │   │                   │
+  │                    ┌─────┴───▼─────┐             │
+  │                    │ M8 日志捕获   │             │
+  │                    │ 与解析器      │             │
+  │                    └───────┬───────┘             │
+  │                    ┌───────▼───────┐             │
+  │                    │ M9 输入模拟   │             │
+  │                    └───────┬───────┘             │
+  │                    ┌───────▼───────┐             │
+  │                    │ M11 GDScript  │             │
+  │                    │ 日志工具      │             │
+  │                    └───────────────┘             │
+  └────────────────┬─────────────────────────────────┘
+                   │ 文件写入 (.tscn/.gd/project.godot)
+                   │ CLI 调用 (godot --headless ...)
+                   │ 操作系统级输入模拟 API
+                   │ LLM API 调用
+  ┌────────────────▼─────────────────────────────────┐
+  │      Godot 4.x 项目目录          LLM API         │
+  │  debug-sessions/  input-scripts/  GPT-4/Claude    │
+  └──────────────────────────────────────────────────┘
   </pre>
 
-  <h3>关键架构决策</h3>
+  <h3>新增架构决策</h3>
   <table>
     <tr><th>决策</th><th>选择</th><th>理由</th></tr>
     <tr>
-      <td>交互方式</td><td>文件系统 + CLI</td>
-      <td>Godot 无 GUI 远程控制协议。文件操作是唯一跨平台可靠的途径</td>
+      <td>日志解析方式</td><td>正则 + 行模式</td>
+      <td>Godot 日志格式半结构化，AST 太重量级（YAGNI），逐行正则轻量可增量</td>
     </tr>
     <tr>
-      <td>技能交付形态</td>
-      <td>Reasonix Skill (Playbook)</td>
-      <td>与产品定位一致：Agent 调用技能集。不需额外服务进程</td>
+      <td>输入模拟方式</td><td>操作系统 API</td>
+      <td>Godot 无 --headless 输入模拟支持。平台 API 不修改游戏项目，通用性最强</td>
     </tr>
     <tr>
-      <td>脚本语言</td>
-      <td>GDScript (非 C#)</td>
-      <td>产品 PRD 面向 Godot 新手，GDScript 学习成本最低；C# 做可选扩展</td>
+      <td>LLM 分析策略</td><td>可选 + 可降级</td>
+      <td>LLM API 有成本/延迟/失败风险。默认开启但可关闭，失败时 fallback 到结构摘要</td>
     </tr>
     <tr>
-      <td>是否维护编辑器插件</td>
-      <td>不做</td>
-      <td>产品 PRD 明确"不做可视化编辑器替代品"，编辑器插件属于 GUI 范畴</td>
-    </tr>
-    <tr>
-      <td>模板分发</td>
-      <td>内嵌在技能集中（复制而非引用）</td>
-      <td>每个 fork 是独立副本，用户可任意修改，不受上游模板变更影响</td>
+      <td>会话存储</td><td>项目本地 debug-sessions/</td>
+      <td>与项目绑定、自然隔离、已 .gitignore 不泄露</td>
     </tr>
   </table>
 </section>
 
-<!-- ─── 2. 模块分解 ─── -->
+<!-- ─── 2. 新增模块分解 ─── -->
 <section>
-  <h2>2. 模块分解</h2>
-  <p>
-    按<strong>能力边界</strong>拆为 7 个模块。选择理由：每个模块的职责可以用一句话说清，
-    可以独立实现和测试。<strong>M1-M4</strong> 是原子能力，<strong>M5</strong> 是组合产物，
-    <strong>M6</strong> 是基础设施，<strong>M7</strong> 是文档。
-  </p>
+  <h2>2. 新增模块分解</h2>
 
   <div class="module-card">
-    <h3>M1 · Project Scaffolder <span class="badge badge-p0">P0</span></h3>
-    <p><strong>一句话职责：</strong>创建一个能被 Godot 4.x 打开的合法项目目录。</p>
-    <p>创建 project.godot（含项目名、渲染器、分辨率）、目录骨架（scenes/ scripts/ assets/…）、默认空场景、占位 icon。是其他所有模块的前置条件。</p>
-    <p><strong>为什么独立成模块：</strong>项目初始化是明确的一次性操作，与场景/脚本无关。单独测试（验证 project.godot 语法）。</p>
+    <h3>M8 · Log Capture & Parser <span class="badge badge-p0">P0</span> <span class="badge badge-new">NEW</span></h3>
+    <p><strong>一句话职责：</strong>捕获 godot 运行时的 stdout/stderr，解析为结构化日志条目。</p>
+    <p>
+      通过 M6 启动 godot --headless 并捕获进程输出。解析引擎识别 Godot 错误格式、
+      GDScript print() 输出、traceback 行号，输出结构化的日志条目数组。
+      提供摘要统计和 LLM 友好的聚合报告。
+    </p>
+    <div class="iface-list">
+      <strong>接口：</strong>
+      <code>CaptureLogs</code> ·
+      <code>ParseLogText</code> ·
+      <code>SummarizeLogs</code>
+    </div>
+    <p><strong>为什么独立成模块：</strong>日志捕获和解析是调试流水线的数据入口。与输入模拟（M9）、编排（M10）职责分离，可独立测试和复用。比如用户可单独用 ParseLogText 解析已有的日志文件。</p>
   </div>
 
   <div class="module-card">
-    <h3>M2 · Scene Generator <span class="badge badge-p0">P0</span></h3>
-    <p><strong>一句话职责：</strong>将结构化节点描述转换为合法的 .tscn 文件。</p>
-    <p>创建含任意 2D 节点树的场景、向已有场景增删节点、修改节点属性。核心能力是维护 .tscn 文本格式的合法性（缩进、uid、资源引用）。</p>
-    <p><strong>为什么独立成模块：</strong>.tscn 格式有独立语法规则，与 GDScript 完全不同。需要一个专门的渲染器维护 TSON 格式。</p>
+    <h3>M9 · Input Simulator <span class="badge badge-p0">P0</span> <span class="badge badge-new">NEW</span></h3>
+    <p><strong>一句话职责：</strong>向运行中的 Godot 游戏窗口模拟键盘输入。</p>
+    <p>
+      通过操作系统级 API（Windows SendKeys、Linux xdotool、macOS osascript）发送键盘事件。
+      支持三种原语：press（按下）、release（释放）、tap（按下+释放）。
+      支持将按键序列保存为可复用的输入脚本（JSON），支持回放。
+    </p>
+    <div class="iface-list">
+      <strong>接口：</strong>
+      <code>SimulateKeySequence</code> ·
+      <code>CreateInputScript</code> ·
+      <code>ReplayInputScript</code>
+    </div>
+    <p><strong>为什么独立成模块：</strong>跨平台输入模拟是一个独立的技术关注点（三套 API、窗口焦点管理、延迟/重试），不宜与日志处理混在一起。</p>
   </div>
 
   <div class="module-card">
-    <h3>M3 · Script Manager <span class="badge badge-p0">P0</span></h3>
-    <p><strong>一句话职责：</strong>创建 .gd 文件并挂载到场景节点上。</p>
-    <p>生成函数体和信号定义、将脚本附加到场景节点的 script 属性、建立信号连接。与 M2 紧密协作但职责分离：M2 管"场景结构"，M3 管"行为逻辑"。</p>
-    <p><strong>为什么独立成模块：</strong>GDScript 的语法验证、代码生成、挂载机制是独立领域。单一职责要求它不与场景逻辑混在一起。</p>
+    <h3>M10 · Debug Orchestrator <span class="badge badge-p0">P0</span> <span class="badge badge-new">NEW</span></h3>
+    <p><strong>一句话职责：</strong>编排完整调试会话——启动游戏、模拟输入、捕获日志、LLM 分析。</p>
+    <p>
+      这是 Agent 调试的入口点。将 M6+M8+M9 组合为一条命令：
+      「启动游戏 → 等待 N 秒 → 输入模拟操作 → 关闭游戏 → 收集日志 → LLM 分析 → 出报告」。
+      LLM 分析将日志 + 关联的 .gd 代码片段打包为 Prompt，输出根因定位和修复建议。
+    </p>
+    <div class="iface-list">
+      <strong>接口：</strong>
+      <code>RunDebugSession</code> ·
+      <code>AnalyzeLogsWithLLM</code> ·
+      <code>ListDebugSessions</code>
+    </div>
+    <p><strong>为什么独立成模块：</strong>编排是组合逻辑，与原子能力（M8/M9）分离。如果以后有新的原子能力（如截图），M10 可扩展而不修改底层。</p>
   </div>
 
   <div class="module-card">
-    <h3>M4 · Resource Resolver <span class="badge badge-p0">P0</span></h3>
-    <p><strong>一句话职责：</strong>确保外部资源文件（图片/音频/字体）被 Godot 正确索引。</p>
-    <p>将用户提供的资源文件复制到项目 assets 目录、返回正确的 res:// 路径、维护资源路径与文件系统路径的双向映射。</p>
-    <p><strong>为什么独立成模块：</strong>资源管理和场景/脚本是正交问题。不依赖 M2/M3，可以在已有项目上独立使用。</p>
-  </div>
-
-  <div class="module-card">
-    <h3>M5 · Template Library <span class="badge badge-p0">P0</span></h3>
-    <p><strong>一句话职责：</strong>提供三款可运行的 2D 游戏模板供用户 fork。</p>
-    <p>预置「平台跳跃」「打砖块」「点击收集」三个完整项目。用户 ForkTemplate → 获得可运行的独立游戏副本，之后可自由修改。</p>
-    <p><strong>为什么独立成模块：</strong>模板是 M1-M4 + M6 的组合产物。它依赖所有子模块，但提供的是更高层的「复制项目」抽象。</p>
-  </div>
-
-  <div class="module-card">
-    <h3>M6 · Godot CLI Bridge <span class="badge badge-p1">P1</span></h3>
-    <p><strong>一句话职责：</strong>封装 godot 可执行文件的所有 CLI 操作。</p>
-    <p>统一管理 godot 进程生命周期：参数构造、路径解析、超时/kill、退出码解析、版本检测。M5 用它验证模板，Agent 用它运行/导出项目。</p>
-    <p><strong>为什么独立成模块：</strong>进程管理（超时、SIGKILL、跨平台路径）是独立的技术关注点，不宜散落在其他模块中。</p>
-  </div>
-
-  <div class="module-card">
-    <h3>M7 · Skill Playbook & Documentation <span class="badge badge-p1">P1</span></h3>
-    <p><strong>一句话职责：</strong>让 Agent 知道怎么用 M1-M6。</p>
-    <p>结构化 API 说明 + 自然语言→工具链的 Few-shot 示例 + 能力边界声明的 Markdown / YAML 文档。</p>
-    <p><strong>为什么独立成模块：</strong>文档独立于实现，可单独审查、单独版本管理。</p>
+    <h3>M11 · GDScript Log Utilities <span class="badge badge-p1">P1</span> <span class="badge badge-new">NEW</span></h3>
+    <p><strong>一句话职责：</strong>提供 log_info/log_warn/log_error 的 GDScript 模板。</p>
+    <p>
+      生成可直接复制到 Godot 项目的 log_utils.gd 模板脚本。
+      统一输出格式 "LOG:[LEVEL]:[message]" 方便 M8 精准解析。
+      还提供 InjectLogStatements 工具，自动在现有 .gd 文件的关键函数中插入日志。
+    </p>
+    <div class="iface-list">
+      <strong>接口：</strong>
+      <code>GenerateLogScript</code> ·
+      <code>InjectLogStatements</code>
+    </div>
+    <p><strong>为什么独立成模块：</strong>GDScript 模板生成是内容创作，不是运行时逻辑。与 M8（解析）严格对称——M11 负责「写日志」，M8 负责「读日志」。</p>
   </div>
 </section>
 
@@ -282,178 +351,223 @@
   <h2>3. 依赖关系</h2>
 
   <div class="dep-graph">
+    原有模块:
     M1 (Scaffolder)          — 无依赖，独立
     M6 (CLI Bridge)          — 无依赖，独立
-    │
-    M2 (Scene Generator)     ──→ M1 （场景需要项目骨架）
-    M3 (Script Manager)      ──→ M2 （脚本挂载需要场景）
-    M4 (Resource Resolver)   ──→ M1 （资源导入需要项目路径）
-    │
-    M5 (Template Library)    ──→ M1 + M2 + M3 + M4 + M6
+    M2 (Scene Generator)     ──→ M1
+    M3 (Script Manager)      ──→ M2
+    M4 (Resource Resolver)   ──→ M1
+    M5 (Template Library)    ──→ M1+M2+M3+M4+M6
     M7 (Documentation)       — 无代码依赖
+
+    新增模块:
+    M8 (Log Capture)         ──→ M6 (通过 M6 运行 godot)
+    M9 (Input Simulator)     ──→ M6 (启动 godot 进程)
+    M10 (Debug Orchestrator) ──→ M6 + M8 + M9 (组合编排)
+    M11 (GDScript Log Utils) — 无代码依赖 (纯模板生成)
   </div>
 
   <p><strong>依赖规则满足性：</strong></p>
   <ul>
-    <li>✅ 高层 → 接口层 ← 低层实现：M5 调用 M1-M4 的接口，不调用内部实现</li>
-    <li>✅ 不允许低层 → 高层：M2 不会调用 M5，M3 不会调用 M5</li>
-    <li>✅ 无循环依赖：M1→M2→M3 是线性链，M4 只依赖 M1，M5 是汇集点</li>
+    <li>✅ M8-M10 只依赖 M6（基础设施层），不依赖 M1-M5（业务模块）—— 可独立开发测试</li>
+    <li>✅ M10 是组合层，不直接操作文件系统，通过 M8/M9 间接操作 —— 单一职责</li>
+    <li>✅ 无循环依赖 —— M8→M6, M9→M6, M10→M8+M9+M6 是线性向上</li>
+    <li>✅ M11 无任何代码依赖，可首批实现</li>
   </ul>
 </section>
 
 <!-- ─── 4. 接口定义 ─── -->
 <section>
-  <h2>4. 接口定义</h2>
-  <p>完整接口签名见 <code>docs/prd/v1/prd.yaml</code> 各模块的 <code>interfaces</code> 段。以下是概览：</p>
+  <h2>4. 新增接口定义</h2>
+  <p>完整接口签名见 <code>docs/prd/v1/prd.yaml</code>。以下是概览：</p>
 
   <table>
     <tr><th>模块</th><th>接口</th><th>输入要点</th><th>输出</th></tr>
     <tr>
-      <td>M1</td>
-      <td>ScaffoldProject</td>
-      <td>root_path, project_name, resolution, renderer</td>
-      <td>project_root | error</td>
+      <td>M8</td>
+      <td>CaptureLogs</td>
+      <td>project_root, timeout_sec, godot_args[]</td>
+      <td>raw_stdout, entries[], summary, exit_code</td>
     </tr>
     <tr>
-      <td>M2</td>
-      <td>CreateScene / AddNode / RemoveNode / SetNodeProperty</td>
-      <td>scene_path, node 结构（type, name, position, children）</td>
-      <td>scene_path | error</td>
+      <td>M8</td>
+      <td>ParseLogText</td>
+      <td>raw_text, source("stdout"|"stderr")</td>
+      <td>entries[] (level, message, file, line, timestamp, raw)</td>
     </tr>
     <tr>
-      <td>M3</td>
-      <td>CreateScript / AttachScript / ConnectSignal</td>
-      <td>script_path, extends, functions[], scene_path, node_path</td>
-      <td>script_path | error</td>
+      <td>M8</td>
+      <td>SummarizeLogs</td>
+      <td>entries[], include_raw?</td>
+      <td>summary (stats, top_errors, timeline, diagnosis_hints)</td>
     </tr>
     <tr>
-      <td>M4</td>
-      <td>ImportResource / ResolvePath</td>
-      <td>source_path, dest_type, project_root</td>
-      <td>resource_path | error</td>
+      <td colspan="4" style="background:#fafbfc;font-size:.85rem;color:var(--text-secondary);">— — —</td>
     </tr>
     <tr>
-      <td>M5</td>
-      <td>ListTemplates / ForkTemplate / CustomizeTemplate</td>
-      <td>template_id, target_path, overrides{}</td>
-      <td>project_root | error</td>
+      <td>M9</td>
+      <td>SimulateKeySequence</td>
+      <td>keys[], window_title?, godot_project?</td>
+      <td>executed_actions</td>
     </tr>
     <tr>
-      <td>M6</td>
-      <td>RunGodot / CheckGodotVersion</td>
-      <td>project_root, args[], timeout_sec</td>
-      <td>stdout, stderr, exit_code | error</td>
+      <td>M9</td>
+      <td>CreateInputScript</td>
+      <td>sequence[], name</td>
+      <td>script_id</td>
     </tr>
     <tr>
-      <td>M7</td>
-      <td>GetSkillDoc / FindPlaybook / GetScopeBoundary</td>
-      <td>intent（查询语义）</td>
-      <td>playbook | scope</td>
+      <td>M9</td>
+      <td>ReplayInputScript</td>
+      <td>script_id, godot_project?</td>
+      <td>executed_actions</td>
+    </tr>
+    <tr>
+      <td colspan="4" style="background:#fafbfc;font-size:.85rem;color:var(--text-secondary);">— — —</td>
+    </tr>
+    <tr>
+      <td>M10</td>
+      <td>RunDebugSession</td>
+      <td>project_root, input_script?, duration_sec, llm_analysis</td>
+      <td>log_summary, session_id, diagnosis?</td>
+    </tr>
+    <tr>
+      <td>M10</td>
+      <td>AnalyzeLogsWithLLM</td>
+      <td>log_entries[], project_root, relevant_files[]?</td>
+      <td>diagnosis (root_cause, severity, file, line, suggested_fix, confidence)</td>
+    </tr>
+    <tr>
+      <td>M10</td>
+      <td>ListDebugSessions</td>
+      <td>project_root?, limit</td>
+      <td>sessions[]</td>
+    </tr>
+    <tr>
+      <td colspan="4" style="background:#fafbfc;font-size:.85rem;color:var(--text-secondary);">— — —</td>
+    </tr>
+    <tr>
+      <td>M11</td>
+      <td>GenerateLogScript</td>
+      <td>project_root?, log_level</td>
+      <td>script_content, script_path?</td>
+    </tr>
+    <tr>
+      <td>M11</td>
+      <td>InjectLogStatements</td>
+      <td>file_path, inject_points[]</td>
+      <td>modified</td>
     </tr>
   </table>
 </section>
 
-<!-- ─── 5. 风险对照（7 维）─── -->
+<!-- ─── 5. 风险对照 ─── -->
 <section>
-  <h2>5. 风险评估</h2>
+  <h2>5. 风险评估（新增模块）</h2>
 
   <table class="risk-table">
     <tr><th>维度</th><th>风险描述</th><th>涉及模块</th></tr>
-    <tr><td>技术债</td><td>.tscn 格式无官方 schema，每次 Godot 小版本可能变更节点属性名</td><td>M2</td></tr>
-    <tr><td>技术债</td><td>GDScript 语法在 4.0→4.1→4.2 间有破坏性变更（@export 语法）</td><td>M3</td></tr>
-    <tr><td>技术债</td><td>三个模板需随 Godot 同步更新</td><td>M5</td></tr>
-    <tr><td>回滚</td><td>每次操作生成文件 diff，Agent 通过 git revert 或文件快照实现撤销</td><td>全局</td></tr>
-    <tr><td>灰度</td><td>技能集无灰度概念，但模板可标记"实验性"标签</td><td>M5</td></tr>
-    <tr><td>熔断</td><td>Godot CLI 调用须设超时，超时后 SIGTERM → 1s → SIGKILL</td><td>M6</td></tr>
-    <tr><td>监控</td><td>所有 Godot CLI 调用的 stderr/stdout 应捕获并存档用于调试</td><td>M6</td></tr>
-    <tr><td>容错</td><td>目录已存在合法 Godot 项目 → 复用而非覆盖</td><td>M1</td></tr>
-    <tr><td>安全</td><td>路径参数 sanitize（防 ../ 穿越）</td><td>M1, M6</td></tr>
-    <tr><td>安全</td><td>用户提供的 GDScript 代码片段不做直接 eval，用模板拼接</td><td>M3</td></tr>
+    <tr><td>技术债</td><td>Godot 日志格式在版本间可能有差异，解析器正则需维护</td><td>M8</td></tr>
+    <tr><td>技术债</td><td>跨平台输入模拟（Win/Linux/macOS）三套实现需分别维护</td><td>M9</td></tr>
+    <tr><td>回滚</td><td>RunDebugSession 每次执行应保存完整 session 记录，便于追溯</td><td>M10</td></tr>
+    <tr><td>灰度</td><td>LLM 分析属于"增强功能"，可以按用户配置开启/关闭</td><td>M10</td></tr>
+    <tr><td>熔断</td><td>LLM API 调用超时（常见 30s+），需设超时 + fallback</td><td>M10</td></tr>
+    <tr><td>熔断</td><td>输入模拟可能因窗口未聚焦而失败，需重试 + 超时退出</td><td>M9</td></tr>
+    <tr><td>监控</td><td>日志风暴（游戏每帧输出）可能撑爆内存，需行数上限保护</td><td>M8</td></tr>
+    <tr><td>容错</td><td>Godot 进程可能提前退出（崩溃），需优雅处理 partial 日志</td><td>M8, M10</td></tr>
+    <tr><td>安全</td><td>输入模拟不能作用于非 Godot 窗口，需窗口标题校验</td><td>M9</td></tr>
+    <tr><td>安全</td><td>日志可能包含敏感信息（API key 被 print），LLM 分析前需脱敏</td><td>M10</td></tr>
   </table>
 
-  <p><strong>无风险模块说明：</strong>M7（文档）不涉及运行时，无以上七维风险。</p>
+  <p><strong>无风险模块说明：</strong>M11（GDScript 日志模板）是纯文本模板生成，不涉及运行时操作，无以上七维风险。</p>
 </section>
 
 <!-- ─── 6. 任务分解 ─── -->
 <section>
-  <h2>6. 任务清单</h2>
+  <h2>6. 任务清单（新增模块）</h2>
 
   <div class="task-item">
-    <span class="task-id">T1</span> ·
-    <span class="complexity cx-low">低</span>
-    <strong>M1 项目脚手架核心</strong><br>
-    <span>实现 ScaffoldProject：目录创建 + project.godot 模板渲染 + 默认场景写入。
-    涉及文件：<code>tools/scaffolder.ts</code></span><br>
-    <span>依赖：无 · 验收：M1-A1 + M1-A2</span>
+    <span class="task-id">T9</span> ·
+    <span class="complexity cx-med">中</span>
+    <strong>M11 GDScript 日志工具模板</strong><br>
+    <span>实现 GenerateLogScript：生成 log_utils.gd 模板（log_info/log_warn/log_error），
+    统一输出格式 "LOG:[LEVEL]:[message]"。实现 InjectLogStatements：解析 .gd 文件 AST/行模式，
+    在指定函数体内插入日志调用。</span><br>
+    <span>涉及文件：<code>tools/log_utils.ts</code></span><br>
+    <span>依赖：无 · 验收：M11-A1 + M11-A2</span>
   </div>
 
   <div class="task-item">
-    <span class="task-id">T2</span> ·
+    <span class="task-id">T10</span> ·
+    <span class="complexity cx-med">中</span>
+    <strong>M8 日志解析核心</strong><br>
+    <span>实现 ParseLogText：用正则匹配 Godot 错误格式（"ERROR:" / "WARNING:" / "SCRIPT ERROR"），
+    以及 GDScript traceback（"at res://scripts/player.gd:42"）。
+    实现多种错误模式匹配器（编译错误、运行时错误、print 输出、引擎消息）。
+    实现摘要统计和 top_errors 聚合。</span><br>
+    <span>涉及文件：<code>tools/log_parser.ts</code></span><br>
+    <span>依赖：无（纯文本解析，不依赖 M6） · 验收：M8-A2 + M8-A4</span>
+  </div>
+
+  <div class="task-item">
+    <span class="task-id">T11</span> ·
+    <span class="complexity cx-med">中</span>
+    <strong>M8 日志捕获（通过 M6）</strong><br>
+    <span>实现 CaptureLogs：调用 M6 的 RunGodot 运行 godot --headless，
+    捕获 stdout/stderr 后调用 ParseLogText 解析。
+    处理超时、进程崩溃等边缘情况。</span><br>
+    <span>涉及文件：<code>tools/log_capture.ts</code></span><br>
+    <span>依赖：T10 + M6 · 验收：M8-A1 + M8-A3</span>
+  </div>
+
+  <div class="task-item">
+    <span class="task-id">T12</span> ·
     <span class="complexity cx-high">高</span>
-    <strong>M2 .tscn 生成引擎</strong><br>
-    <span>实现 .tscn 文本生成器：节点类型→TSON 映射表、缩进格式化、uid 生成。
-    支持 2D 常用节点（Node2D, Sprite2D, CharacterBody2D, Area2D, CollisionShape2D, StaticBody2D）。
-    涉及文件：<code>tools/scene_generator.ts</code></span><br>
-    <span>依赖：T1 · 验收：M2-A1 + M2-A2 + M2-A3</span>
+    <strong>M9 输入模拟器</strong><br>
+    <span>实现 SimulateKeySequence：抽象三平台输入模拟 API。
+    Windows 用 <code>powershell -Command Add-Type + [System.Windows.Forms.SendKeys]</code>，
+    Linux 用 <code>xdotool</code>，macOS 用 <code>osascript</code>。
+    支持按键原语（press/release/tap）、按键名归一化（Space→空格、W→w）。
+    支持按键间延迟（delay_ms）。
+    实现 CreateInputScript / ReplayInputScript：JSON 格式的输入脚本存储和回放。</span><br>
+    <span>涉及文件：<code>tools/input_simulator.ts</code></span><br>
+    <span>依赖：M6 · 验收：M9-A1 + M9-A2 + M9-A3</span>
   </div>
 
   <div class="task-item">
-    <span class="task-id">T3</span> ·
-    <span class="complexity cx-med">中</span>
-    <strong>M3 脚本管理</strong><br>
-    <span>实现 GDScript 代码模板引擎 + .tscn script 属性写入 + 信号连接段生成。
-    涉及文件：<code>tools/script_manager.ts</code></span><br>
-    <span>依赖：T2 · 验收：M3-A1 + M3-A2 + M3-A4</span>
-  </div>
-
-  <div class="task-item">
-    <span class="task-id">T4</span> ·
-    <span class="complexity cx-low">低</span>
-    <strong>M4 资源解析器</strong><br>
-    <span>实现文件复制 + res:// 路径生成 + 路径双向解析。处理中文/特殊字符。
-    涉及文件：<code>tools/resource_resolver.ts</code></span><br>
-    <span>依赖：T1 · 验收：M4-A1 + M4-A2</span>
-  </div>
-
-  <div class="task-item">
-    <span class="task-id">T5</span> ·
-    <span class="complexity cx-med">中</span>
-    <strong>M6 Godot CLI 桥</strong><br>
-    <span>封装 child_process 执行 godot：参数构造、超时管理、退出码解析、版本检测。
-    涉及文件：<code>tools/godot_cli.ts</code></span><br>
-    <span>依赖：无 · 验收：M6-A1 + M6-A2</span>
-  </div>
-
-  <div class="task-item">
-    <span class="task-id">T6</span> ·
+    <span class="task-id">T13</span> ·
     <span class="complexity cx-high">高</span>
-    <strong>M5 三个游戏模板开发</strong><br>
-    <span>用 M1-M4 + M6 实现三个完整可玩的 2D 游戏模板：
-    平台跳跃（Platformer）、打砖块（Breakout）、点击收集（Clicker）。
-    每个模板需含：完整场景、脚本、资源占位文件。
-    涉及文件：<code>templates/platformer/</code> <code>templates/breakout/</code> <code>templates/clicker/</code></span><br>
-    <span>依赖：T1-T5 · 验收：M5-A1 + M5-A3</span>
+    <strong>M10 调试编排器</strong><br>
+    <span>实现 RunDebugSession：编排 godot 启动 → 输入模拟 → 日志捕获 → 会话保存。
+    支持 llm 分析开关。实现 AnalyzeLogsWithLLM：构建 LLM Prompt
+    （日志条目摘要 + top_errors 代码片段 + 项目结构上下文），
+    调用 OpenAI / Anthropic API，解析返回的诊断结构。
+    调用失败时 graceful 降级（返回纯日志摘要）。
+    实现 ListDebugSessions：扫描 debug-sessions/ 目录列出历史记录。</span><br>
+    <span>涉及文件：<code>tools/debug_orchestrator.ts</code></span><br>
+    <span>依赖：T11 + T12 · 验收：M10-A1 + M10-A2 + M10-A3</span>
   </div>
 
   <div class="task-item">
-    <span class="task-id">T7</span> ·
+    <span class="task-id">T14</span> ·
     <span class="complexity cx-med">中</span>
-    <strong>M7 文档与 Playbook 编写</strong><br>
-    <span>为 M1-M6 每个接口写 Agent 可读的说明 + 至少一个自然语言→工具链映射示例。
-    编写 Scope Boundary 文档（哪些场景 Agent 应拒绝或降级）。
-    涉及文件：<code>SKILL.md</code> <code>docs/playbooks/</code></span><br>
-    <span>依赖：T6 · 验收：M7-A1 + M7-A2 + M7-A3</span>
+    <strong>为三个模板预置日志埋点和测试用例</strong><br>
+    <span>在 platformer / breakout / clicker 模板的脚本中注入 log_info/log_error 日志。
+    为每个模板创建输入脚本（test_play.json / test_bounce.json / test_click.json），
+    覆盖核心玩法路径。确保 M10 能在模板上跑出有意义的诊断结果。</span><br>
+    <span>涉及文件：<code>templates/*/scripts/</code> + <code>input-scripts/</code></span><br>
+    <span>依赖：T9 + T12 · 验收：M5-A3 扩展（模板日志埋点完整）</span>
   </div>
 
   <div class="task-item">
-    <span class="task-id">T8</span> ·
+    <span class="task-id">T15</span> ·
     <span class="complexity cx-med">中</span>
-    <strong>S 层场景测试</strong><br>
-    <span>端到端测试：用技能集创建一个完整的小游戏项目（如平台跳跃），
-    用 godot --headless --check 验证项目加载无误，
-    用 godot --headless --export 验证导出。
-    涉及文件：<code>tests/e2e/</code></span><br>
-    <span>依赖：T6 · 验收：M1-A4 + M2-A4 + M5-A3</span>
+    <strong>S 层端到端测试（调试闭环）</strong><br>
+    <span>端到端测试场景：(a) 用 M1-M5 创建一个项目，(b) 植入一个已知 bug
+    （如删除 CollisionShape、改错信号名），(c) 用 M10 RunDebugSession 诊断，
+    (d) 验证 LLM 诊断报告指向正确的文件和问题描述。</span><br>
+    <span>涉及文件：<code>tests/s/debug_pipeline.test.ts</code></span><br>
+    <span>依赖：T13 + T14 · 验收：M10-A4</span>
   </div>
 </section>
 
@@ -463,27 +577,66 @@
 
   <h3>推荐实现顺序</h3>
   <pre style="background:#f1f5f9;padding:.8rem 1rem;border-radius:8px;font-size:.85rem;">
-  T1 (M1 脚手架) ──────────────── 基础，无依赖
-  T5 (M6 CLI Bridge) ─────────── 基础，无依赖，尽早可验证 godot 可用
+  T9  (M11 日志模板)  ─── 无依赖，先做，立即能给模板项目用
+  T10 (M8 日志解析器) ─── 纯文本解析，无依赖，可独立开发测试
        │
-  T2 (M2 场景生成器) ─── 核心难点，先攻
-  T4 (M4 资源解析器) ─── 简单，与 T2 可并行
+  T11 (M8 日志捕获) ──── 依赖 T10 + M6(已有)
+  T12 (M9 输入模拟器) ── 依赖 M6(已有)，与 T11 并行
        │
-  T3 (M3 脚本管理) ───── 依赖 T2
+  T13 (M10 编排器) ──── 依赖 T11 + T12，调试入口
        │
-  T6 (M5 模板) ──────── 依赖 T1-T5，验证整体
-  T8 (S 层测试) ─────── 依赖 T6
-  T7 (M7 文档) ──────── 最后，但可提前写框架
+  T14 (模板日志埋点) ─── 依赖 T9 + T12，让模板可调试
+  T15 (S 层端到端) ──── 依赖 T13 + T14，验收闭环
   </pre>
 
   <h3>技术选型建议（FREE ZONE）</h3>
   <ul>
-    <li>TypeScript（与 Reasonix 运行时的语言一致）</li>
-    <li>.tscn 生成用模板字符串 + 逐行构建器，而非 XML DOM（.tscn 不是 XML，是自定义 TSON）</li>
-    <li>GDScript 生成用模板引擎（如 EJS 风格），避免 AST 操作增加复杂度（YAGNI）</li>
-    <li>测试框架：vitest（TypeScript 生态）</li>
-    <li>Godot 版本锁定：GitHub Action 中用 <code>4.3-stable</code> Docker 镜像做 CI</li>
+    <li><strong>日志解析：</strong>用 RE2 兼容的正则（TypeScript 原生 RegExp），Godot 错误格式用多级匹配器链（先匹配 ERROR 行 → 再匹配后续 traceback 行）</li>
+    <li><strong>输入模拟：</strong>Windows 用 <code>child_process.spawn('powershell', ['-Command', ...])</code> 调用 SendKeys；Linux 用 <code>xdotool</code>；macOS 用 <code>osascript -e 'tell application "System Events"...'</code></li>
+    <li><strong>LLM 分析：</strong>用 fetch API 直接调用 OpenAI/Anthropic REST API，不引入额外 SDK 依赖（避免依赖膨胀）</li>
+    <li><strong>会话存储：</strong>JSON 格式存储在 <code>debug-sessions/&lt;timestamp&gt;-&lt;session_id&gt;.json</code></li>
+    <li><strong>测试：</strong>M8 的解析器用静态日志文件做单元测试（Mock 数据），不依赖 godot 进程。M9 用 Mock 层屏蔽平台差异</li>
   </ul>
+
+  <h3>Log Entry 数据结构（M8 核心类型）</h3>
+  <pre style="background:#f1f5f9;padding:.8rem 1rem;border-radius:8px;font-size:.85rem;">
+  interface LogEntry {
+    level: "error" | "warning" | "info" | "debug";
+    message: string;           // 日志消息正文
+    file?: string;             // res://scripts/player.gd
+    line?: number;             // 42
+    timestamp: number;         // 相对运行起点毫秒
+    raw: string;               // 原始日志行
+    category?: "script" | "engine" | "print" | "system";
+  }
+
+  interface LogSummary {
+    stats: { total: number; errors: number; warnings: number; infos: number; };
+    top_errors: Array&lt;{
+      file: string;
+      line: number;
+      count: number;
+      example: string;
+    }&gt;;
+    timeline: Array&lt;{ ms: number; event: string }&gt;;
+    diagnosis_hints: string[];
+  }
+  </pre>
+
+  <h3>Input Action 数据结构（M9 核心类型）</h3>
+  <pre style="background:#f1f5f9;padding:.8rem 1rem;border-radius:8px;font-size:.85rem;">
+  interface InputAction {
+    action: "press" | "release" | "tap";
+    key: string;             // "Space" | "W" | "A" | "S" | "D" | "Up" | ...
+    delay_ms: number;        // 执行此动作前的等待时间（相对上一动作）
+  }
+
+  interface InputScript {
+    name: string;
+    created: string;         // ISO timestamp
+    sequence: InputAction[];
+  }
+  </pre>
 </section>
 
 <footer>

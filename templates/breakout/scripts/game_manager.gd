@@ -12,6 +12,7 @@ var lives: int = 3
 
 
 func _ready() -> void:
+	print("LOG:INFO:Game started with " + str(lives) + " lives")
 	# Create bricks grid
 	for row in 5:
 		for col in 8:
@@ -26,6 +27,7 @@ func _ready() -> void:
 func _on_brick_hit(_body: Node, brick: StaticBody2D) -> void:
 	brick.queue_free()
 	score += 10
+	print("LOG:INFO:Brick destroyed, score=" + str(score))
 	update_ui()
 
 

@@ -10,6 +10,7 @@ var spawn_timer: float = 0.0
 
 
 func _ready() -> void:
+	print("LOG:INFO:Clicker game started")
 	# Spawn initial items
 	for i in 3:
 		spawn_item()
@@ -31,4 +32,5 @@ func spawn_item() -> void:
 
 func _on_item_collected(points: int) -> void:
 	score += points
+	print("LOG:INFO:Item collected, score=" + str(score))
 	score_label.text = "Score: " + str(score)

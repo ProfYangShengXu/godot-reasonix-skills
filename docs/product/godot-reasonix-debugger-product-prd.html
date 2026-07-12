@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Godot Reasonix 游戏调试与测试模块 — 产品设计文档</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --accent: #2a7de1;
+    --accent-light: #e8f0fe;
+    --text: #1a1a2e;
+    --text-secondary: #555;
+    --border: #dee2e6;
+    --success: #0f7b5a;
+    --warning: #b8860b;
+    --danger: #c0392b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 2rem 1rem;
+  }
+  .container { max-width: 880px; margin: 0 auto; }
+  header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #e74c3c 100%);
+    color: white;
+    padding: 3rem 2rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+  }
+  header h1 { font-size: 2.2rem; margin-bottom: .5rem; }
+  header .subtitle { font-size: 1.1rem; opacity: .85; }
+  header .meta { margin-top: 1.2rem; font-size: .9rem; opacity: .7; }
+
+  section {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  section h2 {
+    font-size: 1.4rem;
+    color: var(--accent);
+    margin-bottom: 1.2rem;
+    padding-bottom: .5rem;
+    border-bottom: 3px solid var(--accent-light);
+  }
+  section h3 {
+    font-size: 1.1rem;
+    margin: 1.2rem 0 .6rem;
+    color: var(--text);
+  }
+  section p, section li { margin-bottom: .6rem; color: var(--text-secondary); }
+  ul, ol { padding-left: 1.4rem; }
+  blockquote {
+    border-left: 4px solid var(--accent);
+    background: var(--accent-light);
+    padding: .8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: .95rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: .6rem .8rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--accent-light);
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .tag {
+    display: inline-block;
+    padding: .15rem .6rem;
+    border-radius: 20px;
+    font-size: .8rem;
+    font-weight: 600;
+  }
+  .tag-mvp { background: #d4edda; color: #155724; }
+  .tag-nth { background: #fff3cd; color: #856404; }
+  .tag-wont { background: #f8d7da; color: #721c24; }
+  .badge {
+    display: inline-block;
+    background: var(--accent-light);
+    color: var(--accent);
+    padding: .1rem .5rem;
+    border-radius: 4px;
+    font-size: .8rem;
+    font-weight: 600;
+  }
+  .risk-card {
+    border-left: 4px solid var(--border);
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .risk-card.market { border-color: var(--danger); background: #fef2f2; }
+  .risk-card.ops { border-color: var(--warning); background: #fffbeb; }
+  .risk-card.growth { border-color: var(--accent); background: var(--accent-light); }
+  .risk-card.monetize { border-color: var(--success); background: #ecfdf5; }
+  footer {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: .85rem;
+    padding: 2rem 0;
+  }
+  .flow-diagram {
+    background: var(--accent-light);
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin: 1rem 0;
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: .9rem;
+    line-height: 2;
+    color: var(--text);
+  }
+  @media (max-width: 600px) {
+    header { padding: 2rem 1.2rem; }
+    header h1 { font-size: 1.6rem; }
+    section { padding: 1.2rem; }
+    table { font-size: .85rem; }
+    th, td { padding: .4rem .5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>🔍 Godot Reasonix 游戏调试与测试模块</h1>
+  <div class="subtitle">日志采集 + LLM 驱动的自动化游戏测试，让 Agent 真正「看见」游戏运行态</div>
+  <div class="meta">
+    <span>产品设计文档 v1.0</span> · <span>非技术方案</span> · <span>后续由 pipeline 架构师转换为技术 PRD</span>
+  </div>
+</header>
+
+<!-- 1. 背景与目标 -->
+<section>
+  <h2>1. 背景与目标</h2>
+
+  <h3>现实问题</h3>
+  <p>
+    当前 Godot Reasonix 技能集可以<strong>创建项目、编写脚本、搭建场景、管理资源</strong>——但这是一个<strong>单向管道</strong>：
+    Agent 写了代码，却无法知道代码<strong>跑起来对不对</strong>。
+  </p>
+  <p>
+    实际游戏开发中，超过一半的时间花在<strong>调试</strong>上：
+  </p>
+  <ul>
+    <li>角色跳跃落地后卡在地板里 —— 是 CollisionShape 没配好，还是刚体参数不对？</li>
+    <li>点击按钮没反应 —— 信号没连上？脚本没挂载？路径写错了？</li>
+    <li>小球穿墙而过 —— Area2D 的 layer/mask 配置冲突？</li>
+    <li>某个场景加载时崩溃 —— 资源路径失效？脚本编译报错？</li>
+  </ul>
+  <p>
+    这些问题，当前的 Agent 无法诊断。它「写完了」就无法再介入。<br>
+    <strong>结果</strong>：用户还是要自己手动操作 Godot 编辑器去反复试错，Agent 只做了前半段工作。
+  </p>
+
+  <h3>一句话定位</h3>
+  <blockquote>「让 AI Agent 不仅能写 Godot 代码，还能『看见』游戏运行时、『操控』输入、『诊断』问题的闭环调试系统。」</blockquote>
+  <p>
+    更具体地说：通过<strong>日志采集模块</strong>捕获游戏运行态的结构化信息，通过<strong>游戏测试模块</strong>让 Agent 能像人一样操控游戏（按键盘、移动鼠标、截图比对），并用 LLM 自动分析日志 → 定位问题 → 修复代码 → 重新验证，形成完整的<strong>「写 → 跑 → 测 → 修」闭环</strong>。
+  </p>
+
+  <h3>成功标准（非技术指标）</h3>
+  <ul>
+    <li><strong>问题定位时间缩短 70%</strong>：Agent 辅助下，从发现问题到定位根因的时间相比纯手动调试减少 70%</li>
+    <li><strong>首次修复准确率 &gt; 50%</strong>：Agent 自动诊断并修复的问题中，超过一半一次改对，无需回滚</li>
+    <li><strong>用户自助调试率 &gt; 60%</strong>：用户遇到游戏运行时错误时，Agent 在不求助人类的情况下独立完成「捕获 → 诊断 → 修复」</li>
+    <li><strong>自动回归测试覆盖 &gt; 80% 的核心玩法路径</strong>：对每个模板游戏的核心交互路径（跳跃、碰撞、收集），Agent 能自动录制并回放测试</li>
+  </ul>
+</section>
+
+<!-- 2. 用户画像 -->
+<section>
+  <h2>2. 用户画像</h2>
+
+  <h3>👤 画像 A：AI 驱动的独立游戏开发者 · Solo Dev</h3>
+  <table>
+    <tr><th>维度</th><th>说明</th></tr>
+    <tr><td>身份/场景</td><td>全职独立游戏开发者，重度依赖 AI Agent 写代码。游戏已经初步跑起来，但在调试阶段反复卡住</td></tr>
+    <tr><td>痛点</td><td>Agent 写的代码「看上去对」，跑起来就崩。不得不自己进编辑器打断点、改参数、反复重试。调试时间占开发总时间的 60%+</td></tr>
+    <tr><td>使用频率</td><td>每工作日多次（每次修改代码后都要验证）</td></tr>
+    <tr><td>核心诉求</td><td>「我告诉 Agent '角色跳跃落地会穿模'，Agent 自己跑一遍游戏、抓日志、看碰撞参数、定位到是哪个节点的哪个属性不对，改完再跑一遍确认——全程不需要我动手」</td></tr>
+  </table>
+
+  <h3>👤 画像 B：AI 编程 Agent 使用者 · AI Native Dev</h3>
+  <table>
+    <tr><th>维度</th><th>说明</th></tr>
+    <tr><td>身份/场景</td><td>用 Cursor/Windsurf/Reasonix 做一切开发的工程师，GameDev 是副业探索</td></tr>
+    <tr><td>痛点</td><td>非全职游戏开发者，对 Godot 调试工具（调试器、场景检查器、Profiler）不熟悉。日志是乱码、错误栈看不懂、不知道从何查起</td></tr>
+    <tr><td>使用频率</td><td>每周数次（业余项目）</td></tr>
+    <tr><td>核心诉求</td><td>「我对 Agent 说 '跑步时会报这个错'，然后把报错信息贴给 Agent，Agent 自动分析日志、读取相关脚本、给出修改建议」</td></tr>
+  </table>
+
+  <h3>👤 画像 C：游戏 QA / 自动化测试工程师</h3>
+  <table>
+    <tr><th>维度</th><th>说明</th></tr>
+    <tr><td>身份/场景</td><td>小团队的 QA 负责人，需要自动化测试游戏核心功能，但缺乏 Test Framework 开发资源</td></tr>
+    <tr><td>痛点</td><td>手动回归测试枯燥易漏；写 Godot 的测试框架（GUT / WAT）学习成本高；自然语言描述的 Bug 难以复现</td></tr>
+    <tr><td>使用频率</td><td>每日持续使用</td></tr>
+    <tr><td>核心诉求</td><td>「用自然语言定义测试用例：'从起点走到(100,200)位置，收集3个金币，检查分数是否增加' —— Agent 自动录制、自动回放、自动比对」</td></tr>
+  </table>
+
+  <h3>👤 画像 D：游戏设计学习者 · Student</h3>
+  <table>
+    <tr><th>维度</th><th>说明</th></tr>
+    <tr><td>身份/场景</td><td>在校学生，用 Godot 做课程项目或 Game Jam 作品</td></tr>
+    <tr><td>痛点</td><td>代码写完了演示时崩溃，不知道错在哪。舍友/同学帮不上忙，网上搜不到类似问题</td></tr>
+    <tr><td>使用频率</td><td>作业季密集使用，平时间歇</td></tr>
+    <tr><td>核心诉求</td><td>「把报错信息发给 Agent，Agent 告诉我哪里错了、怎么改，最好直接改好让我下载」</td></tr>
+  </table>
+</section>
+
+<!-- 3. MVP 定义 -->
+<section>
+  <h2>3. MVP 定义</h2>
+
+  <h3>🥇 Must-have（MVP 必须包含）</h3>
+  <ul>
+    <li><span class="tag tag-mvp">P0</span> <strong>游戏运行日志捕获</strong> —— 通过 <code>godot --headless</code> 运行游戏，完整捕获 stdout/stderr、GDScript <code>print()</code> 输出、Godot 引擎错误信息，输出为结构化文本</li>
+    <li><span class="tag tag-mvp">P0</span> <strong>日志解析与错误检测</strong> —— 自动识别日志中的 Error/Warning 级别消息，关联到对应的 .gd 文件和行号，提炼出「什么类型的错误 × 哪个文件 × 哪一行 × 错误信息」的结构化报告</li>
+    <li><span class="tag tag-mvp">P0</span> <strong>基础键盘输入模拟</strong> —— 通过 CLI 参数或暴露的 Godot API 向运行中的游戏发送按键事件（方向键、空格、Enter、WASD），让 Agent 能「操控」游戏角色</li>
+    <li><span class="tag tag-mvp">P0</span> <strong>日志 → 问题定位流水线</strong> —— 将捕获的日志原文 + 结构化错误信息 + 相关脚本代码片段 + 项目结构上下文打包为 Prompt，调用 LLM 分析，输出问题定位和修复建议</li>
+    <li><span class="tag tag-mvp">P1</span> <strong>自动运行 + 日志收集</strong> —— 一条命令完成「启动游戏 → 等待 N 秒 → 输入模拟操作序列 → 关闭游戏 → 收集全部日志」的完整流程</li>
+    <li><span class="tag tag-mvp">P1</span> <strong>GDScript 内嵌日志注解</strong> —— 提供预设的日志模板/宏（如 <code>log_info()</code>、<code>log_warn()</code>、<code>log_error()</code>），让 GDScript 脚本产出格式统一的日志，便于后续结构化解析</li>
+  </ul>
+
+  <h3>📅 Nice-to-have（一期后加）</h3>
+  <ul>
+    <li><span class="tag tag-nth">P2</span> <strong>鼠标点击/移动模拟</strong> —— 在游戏中模拟鼠标事件（移动到坐标、点击、拖拽）</li>
+    <li><span class="tag tag-nth">P2</span> <strong>游戏截图捕获</strong> —— 运行时截取游戏画面，供 LLM 或用户查看</li>
+    <li><span class="tag tag-nth">P2</span> <strong>LLM 视觉分析</strong> —— 将截图 + 日志一起发给 LLM（如 GPT-4V），让模型「看」到游戏画面状态辅助分析</li>
+    <li><span class="tag tag-nth">P2</span> <strong>自动修复建议 → 自动修复</strong> —— Agent 分析出问题后，自动修改对应 .gd / .tscn 文件，再跑一轮验证</li>
+    <li><span class="tag tag-nth">P3</span> <strong>回归测试套件录制与回放</strong> —— 用户演示一次操作流程，Agent 录制为可重复执行的测试脚本</li>
+    <li><span class="tag tag-nth">P3</span> <strong>游戏状态快照对比</strong> —— 在关键帧保存游戏状态（变量值、Transform），回放时自动比对 Diff</li>
+    <li><span class="tag tag-nth">P3</span> <strong>性能分析集成</strong> —— 捕获 FPS、帧时间、内存使用曲线，识别性能瓶颈</li>
+  </ul>
+
+  <h3>🚫 明确不做什么</h3>
+  <ul>
+    <li><span class="tag tag-wont">不做</span> <strong>Godot 内置调试器的 GUI 替代</strong> —— 我们不重写断点/步进/变量监视等功能。只做「无头模式下 Agent 可读」的日志和输入模拟</li>
+    <li><span class="tag tag-wont">不做</span> <strong>游戏内可视化 Debug Overlay</strong> —— 不向游戏画面添加 FPS/碰撞框/NavMesh 可视化（这些由 Godot 编辑器自带 Debug 选项管理）</li>
+    <li><span class="tag tag-wont">不做</span> <strong>第三方测试框架的封装</strong> —— 不封装 GUT/WAT/gdUnit。模块输出原始日志 + 结构化数据，不定义新的断言 DSL</li>
+    <li><span class="tag tag-wont">不做</span> <strong>通用 GUI 测试工具</strong> —— 不试图做成一个通用的 GUI 自动化测试平台（如 Selenium for Godot）。只服务于 Agent 调试游戏</li>
+    <li><span class="tag tag-wont">不做</span> <strong>移动端/主机端部署测试</strong> —— MVP 只做桌面端（Windows/macOS/Linux）的无头测试</li>
+  </ul>
+</section>
+
+<!-- 4. 2B / 2C 分析 -->
+<section>
+  <h2>4. 2B / 2C 分析</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>维度</th>
+        <th>🎯 To C（个人开发者）</th>
+        <th>🏢 To B（工作室 / 教育机构）</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>用户是谁</strong></td>
+        <td>独立游戏开发者、AI 编程重度用户、GameJam 参赛者、学生</td>
+        <td>小型游戏工作室 QA 组、培训机构项目作业批改、众包测试平台</td>
+      </tr>
+      <tr>
+        <td><strong>付费意愿</strong></td>
+        <td>中等——对「自动调试」有强烈需求，但希望免费/低价</td>
+        <td>高——QA 自动化直接节省人力成本（一个 QA 月薪 ≈ 工具年费）</td>
+      </tr>
+      <tr>
+        <td><strong>决策链</strong></td>
+        <td>单人决策——遇到调试痛点就下载</td>
+        <td>技术负责人评估 → 试用 → 按团队采购</td>
+      </tr>
+      <tr>
+        <td><strong>核心功能差异</strong></td>
+        <td>即开即用：单条命令跑测试 + 看结果 + LLM 分析建议</td>
+        <td>批量运行 + 测试报告聚合 + CI/CD 集成 + 历史记录对比 + 权限控制</td>
+      </tr>
+      <tr>
+        <td><strong>获客渠道</strong></td>
+        <td>GitHub README 展示 / Reddit / X / YouTube 录屏</td>
+        <td>直接 Outreach + Godot 社区企业用户 + 案例研究</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>主次关系</h3>
+  <p><strong>To C 先行，To B 验证后再投入。</strong></p>
+  <p>
+    MVP 完全面向个人开发者。调试是每个游戏开发者的日常痛点，C 端需求真实且紧迫。
+    当 C 端用户达到一定规模后，工作室和教育机构会自然提出企业级需求（批量运行、CI 集成、报告聚合），届时再投入 B 端功能。
+  </p>
+  <p>
+    <strong>功能分区</strong>：C 端核心是「即时反馈」——跑一次看结论；B 端额外需要「规模化与可追溯」——批量跑、历史对比、角色权限。
+  </p>
+</section>
+
+<!-- 5. 设计理念 -->
+<section>
+  <h2>5. 设计理念</h2>
+
+  <h3>体验关键词</h3>
+  <p>
+    <span class="badge">闭环</span>
+    <span class="badge">可观测</span>
+    <span class="badge">LLM-Native</span>
+  </p>
+  <ul>
+    <li><strong>闭环（Closed Loop）</strong> —— Agent 不再「写完就交差」。写代码 → 运行 → 捕获日志 → 分析 → 修复 → 再验证，形成一个完整的自动循环。用户只需要描述问题，Agent 负责跑完全程。</li>
+    <li><strong>可观测（Observable by Default）</strong> —— 每次运行默认产出完整的日志 + 结构化错误报告 + 输入操作序列记录。用户和 Agent 都能回溯「发生了什么」。不做「静默失败」——即使游戏没崩溃，也能看到所有运行时输出。</li>
+    <li><strong>LLM-Native（为 LLM 设计）</strong> —— 所有输出格式（日志、错误报告、运行摘要）优先为 LLM 解析优化：结构化、扁平化、无冗余、携带文件路径和行号引用。人类可读性是第二优先级，但不应损害机器可读性。</li>
+  </ul>
+
+  <h3>核心交互原则</h3>
+  <ol>
+    <li><strong>一次命令跑完全流程。</strong> 用户的调试请求应当对应一条命令：「运行并按 W 键 3 秒，看角色是否碰撞到墙壁」。不需要用户手动拼接启动 → 模拟 → 收日志多个步骤。</li>
+    <li><strong>错误信息要「可执行」。</strong> 日志解析结果不能只是显示一堆文字——必须包含可操作的信息：「scripts/player.gd:42 行的 <code>jump_velocity</code> 引用了未定义的变量 <code>gravity</code>」。LLM 可以直接据此修改代码。</li>
+    <li><strong>人机同权。</strong> Agent 能做的事，用户用命令行也能做。不隐藏底层操作的 CLI 入口，进阶用户可精细控制参数。</li>
+  </ol>
+
+  <div class="flow-diagram">
+    ┌──────────────────────────────────────────────────────┐
+    │               Agent 调试闭环流程                         │
+    ├──────────────────────────────────────────────────────┤
+    │                                                      │
+    │  ① 用户描述问题                                        │
+    │     ↓                                                 │
+    │  ② Agent 解析 → 生成测试脚本（键盘操作序列 + 预期结果）   │
+    │     ↓                                                 │
+    │  ③ godot --headless 运行游戏 + 输入模拟                  │
+    │     ↓                                                 │
+    │  ④ 捕获日志 + 截图 + 错误信息                           │
+    │     ↓                                                 │
+    │  ⑤ LLM 分析日志：定位根因 + 关联代码文件                  │
+    │     ↓                                                 │
+    │  ⑥ Agent 修改 .gd / .tscn 文件                          │
+    │     ↓                                                 │
+    │  ⑦ 重新运行测试 → 确认修复 ✓ / 仍有问题 → 回到 ④       │
+    │                                                      │
+    └──────────────────────────────────────────────────────┘
+  </div>
+
+  <h3>视觉风格方向</h3>
+  <p>
+    这是 Agent 调试工具，不是 GUI 产品。面向用户的「界面」仍然是终端和代码文件：
+  </p>
+  <ul>
+    <li><strong>运行摘要</strong>（终端输出）：灰底白字，绿钩表示测试通过，红叉表示发现问题，黄色警告表示异常行为</li>
+    <li><strong>结构化错误报告</strong>（JSON/YAML 格式）：方便 LLM 解析，也方便用户用 <code>jq</code> 或 <code>yq</code> 过滤</li>
+    <li><strong>操作回放日志</strong>：按时间轴记录「T+0.5s: press KeyD → T+1.2s: collision detected」</li>
+  </ul>
+  <p>整体调性：<strong>精密、可信、透明</strong>——让用户愿意把「试错」的工作交给 Agent。</p>
+</section>
+
+<!-- 6. 风险 -->
+<section>
+  <h2>6. 风险（非技术）</h2>
+
+  <div class="risk-card market">
+    <h3>📉 市场风险</h3>
+    <p><strong>竞品分析：</strong></p>
+    <ul>
+      <li><strong>Godot GUT / WAT / gdUnit</strong> —— 功能完善的单元测试框架，但需要开发者手动写测试用例，不提供 LLM 集成、日志自动分析和输入模拟</li>
+      <li><strong>Manual QA + Godot Debugger</strong> —— 目前的主流方案，完全依赖人。效率和可重复性低</li>
+      <li><strong>Playwright / Puppeteer（Web 游戏）</strong> —— 如果游戏导出为 Web 版，可以用 Web 自动化工具测试，但无法与 Godot 项目文件联动分析</li>
+      <li><strong>AI 直接读代码找 Bug（Cursor / Claude）</strong> —— 只能做静态分析，看不到运行态。漏报率高</li>
+    </ul>
+    <p><strong>风险：</strong> 市场非常小众——「用 AI Agent + 日志 + 输入模拟调试 Godot 游戏」是一个极其细分的需求。同时，如果没有 Godot 官方对 <code>--headless</code> 模式的输入模拟支持，实现成本会很高。</p>
+    <p><strong>缓解：</strong> 从 LLM 分析日志 + 静态代码关联切入（技术门槛低、对用户立即可用），输入模拟作为增强功能随 Godot 官方能力迭代推进。</p>
+  </div>
+
+  <div class="risk-card ops">
+    <h3>⚙️ 运营风险</h3>
+    <ul>
+      <li><strong>Godot 无头模式能力不足</strong> —— Godot <code>--headless</code> 当前可能不支持渲染、无法加载某些资源、或无法响应输入模拟。需深入验证 Godot 4.x CLI 的能力边界</li>
+      <li><strong>LLM 幻觉导致误判</strong> —— Agent 分析日志后可能给出错误的问题定位，进而修改正确的代码，引入新 Bug。需要有「修改前 git commit + 修改后验证失败自动回滚」的安全机制</li>
+      <li><strong>日志风暴</strong> —— 游戏在高频循环中可能产生海量日志（每帧输出），超出 LLM 上下文窗口。需要智能采样和摘要策略</li>
+      <li><strong>跨平台兼容</strong> —— Windows/macOS/Linux 下 godot CLI 的输入模拟方式不同（xdotool / SendKeys / CGEvent），需要平台适配</li>
+    </ul>
+  </div>
+
+  <div class="risk-card growth">
+    <h3>📈 增长风险</h3>
+    <p><strong>冷启动：</strong> 调试工具的初始价值取决于「项目质量和调试场景的丰富度」——一个空项目没有日志可分析。</p>
+    <ul>
+      <li><strong>解法：</strong> 发布时自带 3 个模板游戏的「预置测试用例」——用户跑一下就知道工具能做什么</li>
+      <li><strong>解法：</strong> 每个模板内置日志注解（<code>log_info</code> / <code>log_error</code>），展示最佳实践的日志埋点方式</li>
+      <li><strong>解法：</strong> 提供一个「一键诊断」命令：对任意 Godot 项目运行、抓日志、出报告。用户不需要提前学任何东西</li>
+      <li><strong>解法：</strong> 在 Godot 社区和 AI 编程社区分享「Bug 诊断 Demo 视频」——直观展示了从报错到修复的全自动过程</li>
+    </ul>
+  </div>
+
+  <div class="risk-card monetize">
+    <h3>💰 变现路径</h3>
+    <p><strong>MVP 阶段：免费 + 开源</strong></p>
+    <ul>
+      <li>作为 Godot Reasonix 技能集的内置模块，随主技能集一起发布</li>
+      <li>积累用户口碑和使用案例</li>
+    </ul>
+    <p><strong>后续变现（技能集整体商业化时考虑）：</strong></p>
+    <ul>
+      <li><strong>LLM API 代理服务</strong> —— 用户不想自己配置 OpenAI / Anthropic API key，可以订阅官方代理服务（按量计费）</li>
+      <li><strong>CI/CD 托管运行器</strong> —— 云端跑测试 + LLM 分析 + 生成报告，月费订阅</li>
+      <li><strong>企业测试报告仪表盘</strong> —— 聚合多项目测试结果、历史趋势、问题统计（作为 B 端付费功能）</li>
+    </ul>
+    <p><strong>核心逻辑：</strong> 调试模块的变现不能依赖「锁定基础功能」——因为调试是开发刚需。变现附加在「规模化」和「AI 算力代理」上。</p>
+  </div>
+</section>
+
+<footer>
+  <p>📄 本文档仅描述 WHAT 与 WHY — 不包含技术方案。</p>
+  <p>后续由 pipeline 架构师角色读取本文档，转换为技术 PRD 与实现计划。</p>
+  <p>Godot Reasonix 游戏调试与测试模块 · 产品设计文档 v1.0</p>
+</footer>
+
+</div>
+</body>
+</html>
