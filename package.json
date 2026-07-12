@@ -1,7 +1,7 @@
 {
   "name": "godot-reasonix-skills",
   "version": "2.0.0",
-  "description": "让编程 Agent 操控 Godot 引擎的 Reasonix 技能集 — 含调试闭环 + Bobanana 管线集成",
+  "description": "🎮 Godot Reasonix Skills — AI Agent 操控 Godot 引擎的工具集，含 M1-M11 全套接口 + Bobanana 4.0 管线集成 + 调试闭环",
   "type": "module",
   "scripts": {
     "test": "vitest run",

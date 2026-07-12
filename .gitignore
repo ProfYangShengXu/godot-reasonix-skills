@@ -9,3 +9,5 @@ debug-sessions/
 input-scripts/
 .reasonix/truncated-results/
 .reasonix/desktop-*
+.reasonix/*.json
+
