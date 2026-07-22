@@ -10,7 +10,6 @@
  */
 
 import { readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
 import { randomBytes } from "node:crypto";
 
 // ─── 类型定义 ───

@@ -10,7 +10,7 @@
  */
 
 import { readFile, writeFile, access } from "node:fs/promises";
-import { join, dirname } from "node:path";
+import { join } from "node:path";
 
 // ─── 类型定义 ───
 
