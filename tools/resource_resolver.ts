@@ -8,7 +8,7 @@
  */
 
 import { copyFile, mkdir, access } from "node:fs/promises";
-import { join, relative, dirname, basename, extname } from "node:path";
+import { join, relative, basename, extname } from "node:path";
 
 // ─── 类型定义 ───
 

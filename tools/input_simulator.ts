@@ -16,7 +16,6 @@
 import { spawn } from "node:child_process";
 import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
 import { join } from "node:path";
-import { existsSync } from "node:fs";
 
 // ─── 类型定义 ───
 
