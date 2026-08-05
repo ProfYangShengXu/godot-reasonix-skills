@@ -352,7 +352,7 @@ function parseTscn(content: string): TscnDocument {
 
       if (sectionType === "gd_scene") {
         doc.uid = attrs.uid || "";
-        doc.format = parseInt(attrs.format || "3");
+        doc.format = parseInt(attrs.format || "3") as 3;
       } else if (sectionType === "ext_resource") {
         doc.extResources.push({
           id: attrs.id || "",

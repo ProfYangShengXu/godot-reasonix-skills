@@ -10,6 +10,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdir, rm, readFile, access, readdir } from "node:fs/promises";
+import type { Dirent } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";
@@ -29,7 +30,7 @@ async function listFilesRecursive(dir: string): Promise<string[]> {
   while (stack.length > 0) {
     const prefix = stack.pop()!;
     const fullDir = prefix ? join(dir, prefix) : dir;
-    let children: string[];
+    let children: Dirent[];
     try {
       children = await readdir(fullDir, { withFileTypes: true });
     } catch {
