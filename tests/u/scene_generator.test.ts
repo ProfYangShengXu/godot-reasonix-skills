@@ -5,8 +5,8 @@
  * 使用 RenderTscn / ParseTscn 纯函数，避免文件系统 IO。
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { describe, it, expect } from "vitest";
+import { mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";

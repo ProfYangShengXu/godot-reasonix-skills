@@ -4,8 +4,7 @@
  * 创建项目 → 运行 godot --headless 验证 → 解析输出
  */
 
-import { execSync } from "node:child_process";
-import { copyFile, mkdir, writeFile, rm } from "node:fs/promises";
+import { rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";

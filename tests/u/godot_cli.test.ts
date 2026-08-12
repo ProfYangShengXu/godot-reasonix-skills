@@ -5,7 +5,7 @@
  * 使用纯函数测试解析逻辑，避免对真实 godot 进程的依赖。
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
