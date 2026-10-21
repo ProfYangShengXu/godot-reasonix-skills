@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>运动评估系统</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tabBasicInfo">
+       <attribute name="title">
+        <string>基本信息</string>
+       </attribute>
+       <layout class="QFormLayout" name="formLayout">
+        <item row="0" column="0">
+         <widget class="QLabel" name="labelName">
+          <property name="text">
+           <string>姓名：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="editName"/>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="labelAge">
+          <property name="text">
+           <string>年龄：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QSpinBox" name="spinAge">
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>120</number>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="labelGender">
+          <property name="text">
+           <string>性别：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QComboBox" name="comboGender">
+          <item>
+           <property name="text">
+            <string>男</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>女</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="labelWeight">
+          <property name="text">
+           <string>体重(kg)：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QDoubleSpinBox" name="spinWeight">
+          <property name="decimals">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <double>300.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="labelHeight">
+          <property name="text">
+           <string>身高(cm)：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QDoubleSpinBox" name="spinHeight">
+          <property name="decimals">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <double>300.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="labelType">
+          <property name="text">
+           <string>用户类型：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <widget class="QComboBox" name="comboType">
+          <item>
+           <property name="text">
+            <string>基础用户</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>举重运动员</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>长跑运动员</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>短跑运动员</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>健美运动员</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>自定义用户</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabTestData">
+       <attribute name="title">
+        <string>体测数据</string>
+       </attribute>
+       <layout class="QFormLayout" name="formLayout_2">
+        <item row="0" column="0">
+         <widget class="QLabel" name="labelLungCapacity">
+          <property name="text">
+           <string>肺活量(ml)：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QDoubleSpinBox" name="spinLungCapacity">
+          <property name="maximum">
+           <double>10000.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="labelRun50m">
+          <property name="text">
+           <string>50米跑(秒)：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QDoubleSpinBox" name="spinRun50m">
+          <property name="decimals">
+           <number>2</number>
+          </property>
+          <property name="maximum">
+           <double>30.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="labelSitAndReach">
+          <property name="text">
+           <string>体前屈(cm)：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QDoubleSpinBox" name="spinSitAndReach">
+          <property name="minimum">
+           <double>-50.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>50.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="labelStandingJump">
+          <property name="text">
+           <string>立定跳远(m)：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QDoubleSpinBox" name="spinStandingJump">
+          <property name="decimals">
+           <number>2</number>
+          </property>
+          <property name="maximum">
+           <double>5.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="labelPullUps">
+          <property name="text">
+           <string>引体向上(次)：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QSpinBox" name="spinPullUps">
+          <property name="maximum">
+           <number>100</number>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="labelLongRun">
+          <property name="text">
+           <string>长跑时间：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QSpinBox" name="spinLongRunMin">
+            <property name="suffix">
+             <string>分</string>
+            </property>
+            <property name="maximum">
+             <number>30</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="spinLongRunSec">
+            <property name="suffix">
+             <string>秒</string>
+            </property>
+            <property name="maximum">
+             <number>59</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabOptional">
+       <attribute name="title">
+        <string>可选项目</string>
+       </attribute>
+       <layout class="QFormLayout" name="formLayout_3">
+        <item row="0" column="0">
+         <widget class="QCheckBox" name="checkBodyFat">
+          <property name="text">
+           <string>体脂率测试</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QDoubleSpinBox" name="spinBodyFat">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="suffix">
+           <string>%</string>
+          </property>
+          <property name="maximum">
+           <double>100.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QCheckBox" name="checkSquat">
+          <property name="text">
+           <string>深蹲测试</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QDoubleSpinBox" name="spinSquat">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="suffix">
+           <string>kg</string>
+          </property>
+          <property name="maximum">
+           <double>1000.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QCheckBox" name="checkBenchPress">
+          <property name="text">
+           <string>卧推测试</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QDoubleSpinBox" name="spinBenchPress">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="suffix">
+           <string>kg</string>
+          </property>
+          <property name="maximum">
+           <double>500.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QCheckBox" name="checkDeadlift">
+          <property name="text">
+           <string>硬拉测试</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QDoubleSpinBox" name="spinDeadlift">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="suffix">
+           <string>kg</string>
+          </property>
+          <property name="maximum">
+           <double>1000.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QPushButton" name="buttonCalculate">
+        <property name="text">
+         <string>计算评分</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="labelResult">
+        <property name="text">
+         <string>运动GPA：</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLCDNumber" name="lcdGPA"/>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QPushButton" name="btnOpenTrainWindow">
+      <property name="text">
+       <string>打开训练计划管理</string>
+      </property>
+      <property name="styleSheet">
+       <string>QPushButton {
+    background-color: #4CAF50;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 5px;
+}
+QPushButton:hover {
+    background-color: #45a049;
+}
+QPushButton:pressed {
+    background-color: #3d8b40;
+}</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="btnOpenChatWindow">
+      <property name="text">
+       <string>打开聊天室</string>
+      </property>
+      <property name="styleSheet">
+       <string>QPushButton {
+    background-color: #2196F3;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 5px;
+}
+QPushButton:hover {
+    background-color: #0b7dda;
+}
+QPushButton:pressed {
+    background-color: #0c68b3;
+}</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

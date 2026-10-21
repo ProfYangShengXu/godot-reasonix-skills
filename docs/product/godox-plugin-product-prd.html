@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Godox Plugin — 产品设计文档</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --accent: #7c3aed;
+    --accent-light: #ede9fe;
+    --text: #1a1a2e;
+    --text-secondary: #555;
+    --border: #dee2e6;
+    --success: #0f7b5a;
+    --warning: #b8860b;
+    --danger: #c0392b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 2rem 1rem;
+  }
+  .container { max-width: 960px; margin: 0 auto; display: flex; gap: 2rem; }
+
+  /* --- Sticky TOC --- */
+  nav.toc {
+    position: sticky;
+    top: 2rem;
+    width: 220px;
+    flex-shrink: 0;
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+    font-size: .85rem;
+  }
+  nav.toc h3 { font-size: .9rem; margin-bottom: .8rem; color: var(--accent); }
+  nav.toc a {
+    display: block;
+    padding: .3rem 0;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    padding-left: .6rem;
+    transition: all .15s;
+  }
+  nav.toc a:hover, nav.toc a:focus { color: var(--accent); border-left-color: var(--accent); }
+  .content { flex: 1; min-width: 0; }
+
+  header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #7c3aed 100%);
+    color: white;
+    padding: 3rem 2rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+  }
+  header h1 { font-size: 2.2rem; margin-bottom: .5rem; }
+  header .subtitle { font-size: 1.1rem; opacity: .85; }
+  header .meta { margin-top: 1.2rem; font-size: .9rem; opacity: .7; }
+
+  details {
+    background: var(--card);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    overflow: hidden;
+  }
+  details summary {
+    cursor: pointer;
+    padding: 1.2rem 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-light);
+    user-select: none;
+  }
+  details summary:hover { opacity: .9; }
+  details .section-body { padding: 1.5rem 2rem 2rem; }
+
+  details h3 { font-size: 1.05rem; margin: 1.2rem 0 .6rem; color: var(--text); }
+  details p, details li { margin-bottom: .6rem; color: var(--text-secondary); }
+  ul, ol { padding-left: 1.4rem; }
+  blockquote {
+    border-left: 4px solid var(--accent);
+    background: var(--accent-light);
+    padding: .8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: .9rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: .6rem .8rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: var(--accent-light); font-weight: 600; color: var(--accent); }
+  tr:nth-child(even) td { background: #fafbfc; }
+
+  .tag {
+    display: inline-block;
+    padding: .15rem .6rem;
+    border-radius: 20px;
+    font-size: .8rem;
+    font-weight: 600;
+  }
+  .tag-mvp { background: #d4edda; color: #155724; }
+  .tag-nth { background: #fff3cd; color: #856404; }
+  .tag-wont { background: #f8d7da; color: #721c24; }
+  .badge {
+    display: inline-block;
+    background: var(--accent-light);
+    color: var(--accent);
+    padding: .1rem .5rem;
+    border-radius: 4px;
+    font-size: .8rem;
+    font-weight: 600;
+  }
+  code {
+    background: #f1f5f9;
+    padding: .1rem .4rem;
+    border-radius: 3px;
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: .85rem;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: .85rem;
+    padding: 2rem 0;
+  }
+
+  @media (max-width: 768px) {
+    .container { flex-direction: column; }
+    nav.toc { position: static; width: 100%; max-height: none; }
+    header { padding: 2rem 1.2rem; }
+    header h1 { font-size: 1.6rem; }
+    details .section-body { padding: 1rem 1.2rem; }
+    table { font-size: .82rem; }
+    th, td { padding: .4rem .5rem; }
+  }
+
+  @media print {
+    nav.toc { display: none; }
+    details[open] { break-inside: avoid; }
+    details summary { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    body { padding: .5in; font-size: 11pt; }
+    header { padding: 1rem; }
+    details { box-shadow: none; border: 1px solid #ddd; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<nav class="toc" id="toc">
+  <h3>📑 目录</h3>
+  <a href="#bg">1. 背景与目标</a>
+  <a href="#okr">2. 数据指标</a>
+  <a href="#persona">3. 用户画像</a>
+  <a href="#mvp">4. MVP 定义</a>
+  <a href="#b2">5. 2B / 2C 分析</a>
+  <a href="#competition">6. 竞争与 SWOT</a>
+  <a href="#design">7. 设计理念</a>
+  <a href="#risk">8. 风险</a>
+</nav>
+
+<div class="content">
+
+<header>
+  <h1>🔌 Godox Plugin</h1>
+  <div class="subtitle">Godot 编辑器内 Agent 桥接插件 — 让 AI Agent 直接操控编辑器 API</div>
+  <div class="meta">
+    <span>产品设计文档 v1.0</span> ·
+    <span>2026-07-12</span> ·
+    <span>后续由 pipeline 架构师转换为技术 PRD</span>
+  </div>
+</header>
+
+<details open id="bg">
+<summary>1. 背景与目标</summary>
+<div class="section-body">
+
+<h3>现实问题</h3>
+<p>
+当前 Godot Reasonix 技能集通过<strong>文件操作 + CLI</strong> 与 Godot 交互——写入 .tscn、生成 .gd、调用 <code>--headless</code> 验证。这种方式有四个根本性局限：
+</p>
+<ul>
+  <li><strong>.tscn 格式无官方 schema</strong>——Agent 用字符串模板生成场景文件，但 Godot 小版本升级可能破坏格式兼容性。每次 Godot 更新（4.0→4.1→4.2）都有节点属性名变化，技能集需要手动适配。</li>
+  <li><strong>--headless 不能模拟输入</strong>——Godot 的无头模式没有键盘/鼠标输入 API。M9 输入模拟器用 OS 级别的 xdotool/SendKeys 发送按键，脆弱且需要窗口焦点。</li>
+  <li><strong>日志解析靠正则猜</strong>——M8 的 ParseLogText 用 7 种正则匹配器识别错误格式，但 Godot 日志格式在小版本间有变化，且无法获取完整调用栈和变量值。</li>
+  <li><strong>无法操控运行时</strong>——不能设断点、不能读取变量、不能单步调试。Agent 看到的只有「跑完后的一堆文字」，而非「跑到一半时编辑器里的状态」。</li>
+</ul>
+
+<h3>一句话定位</h3>
+<blockquote>「像 VSCode Copilot 有 Language Server 一样，给 Godot Reasonix 技能集一个原生编辑器 API 通道。」</blockquote>
+<p>更具体地说：一个 Godot 4.x EditorPlugin，通过 MCP 协议暴露编辑器和运行时 API，让 Agent 不再猜文件格式，而是直接问 Godot「这个场景结构是什么」「这个属性设对了没有」「这个脚本跑起来报什么错」。</p>
+
+</div>
+</details>
+
+<details open id="okr">
+<summary>2. 数据指标</summary>
+<div class="section-body">
+
+<table>
+  <tr><th>层级</th><th>指标</th><th>目标值</th><th>衡量方式</th></tr>
+  <tr>
+    <td>North Star</td>
+    <td>通过插件完成的调试会话占比</td>
+    <td>插件上线后 60% 的调试会话优先走插件通道而非文件操作</td>
+    <td>埋点：godox-plugin 调用次数 vs 纯文件操作次数</td>
+  </tr>
+  <tr>
+    <td>KR-1</td>
+    <td>场景操作正确率</td>
+    <td>插件操作的场景 0% 因格式问题被 Godot 拒绝加载（当前文件操作模式 ~5%）</td>
+    <td>CaptureLogs 统计 "Parse Error" 出现频率</td>
+  </tr>
+  <tr>
+    <td>KR-2</td>
+    <td>调试诊断准确率</td>
+    <td>LLM 诊断的根因定位准确率从 40%（当前规则降级）提升到 70%</td>
+    <td>A/B 测试：同一 bug 用文件操作 vs 插件诊断，人工判断哪个更准</td>
+  </tr>
+  <tr>
+    <td>KR-3</td>
+    <td>用户采纳率</td>
+    <td>安装 Godot Reasonix 技能集的用户中 30% 同时安装了 godox-plugin</td>
+    <td>GitHub Release 下载统计 / 插件管理器安装数</td>
+  </tr>
+</table>
+
+</div>
+</details>
+
+<details open id="persona">
+<summary>3. 用户画像</summary>
+<div class="section-body">
+
+<table>
+  <tr><th>维度</th><th>画像 A：AI Agent 开发者</th><th>画像 B：AI Native 游戏开发者</th><th>画像 C：Godot 工具链维护者</th></tr>
+  <tr>
+    <td><strong>身份/场景</strong></td>
+    <td>维护 Godot Reasonix 技能集的开发者，需要让技能集更可靠</td>
+    <td>用 AI Agent 写 Godot 游戏的独立开发者，卡在调试和场景验证环节</td>
+    <td>Godot 社区工具开发者，关注编辑器扩展生态</td>
+  </tr>
+  <tr>
+    <td><strong>核心痛点</strong></td>
+    <td>.tscn 格式猜测消耗大量维护精力，每次 Godot 小版本更新都要改代码</td>
+    <td>Agent 写的场景打开报错、碰撞参数不对、信号连不上——每次都要进编辑器手动修正</td>
+    <td>Agent 文件操作绕过编辑器，导致版本兼容问题和不可靠的场景编辑</td>
+  </tr>
+  <tr>
+    <td><strong>使用频率</strong></td>
+    <td>每周数次（发布新版本时）</td>
+    <td>每次开发会话都用</td>
+    <td>项目需要时</td>
+  </tr>
+  <tr>
+    <td><strong>核心诉求</strong></td>
+    <td>"插件接管所有场景和脚本操作，我不用再维护 .tscn 格式映射表"</td>
+    <td>"Agent 直接在编辑器里改场景、加节点、连信号，我只需要验收"</td>
+    <td>"插件提供一个稳定的 MCP 接口，其他工具也可以接入"</td>
+  </tr>
+  <tr>
+    <td><strong>技术熟练度</strong></td>
+    <td>高：熟悉 GDScript、EditorPlugin API、MCP 协议</td>
+    <td>中：会写 GDScript，用 AI Agent 主力开发</td>
+    <td>高：Godot 工具链开发者</td>
+  </tr>
+  <tr>
+    <td><strong>替代方案</strong></td>
+    <td>继续维护 .tscn 字符串模板 + 正则解析</td>
+    <td>自己打开编辑器手动修改</td>
+    <td>无——目前没有类似插件</td>
+  </tr>
+</table>
+
+</div>
+</details>
+
+<details open id="mvp">
+<summary>4. MVP 定义</summary>
+<div class="section-body">
+
+<h3>🥇 Must-have（MVP 必须包含）</h3>
+<ul>
+  <li><span class="tag tag-mvp">P0</span> <strong>MCP Server 核心</strong> —— 插件启动一个 stdio MCP server，暴露场景操作接口：<code>get_scene_tree</code>（返回当前打开场景的节点树）、<code>add_node</code>（添加子节点）、<code>remove_node</code>、<code>set_node_property</code>、<code>attach_script</code></li>
+  <li><span class="tag tag-mvp">P0</span> <strong>输入中继基础</strong> —— 插件开启 UDP socket，接收 Agent 发送的按键事件并调用 <code>Input.parse_input_event()</code> 注入</li>
+  <li><span class="tag tag-mvp">P0</span> <strong>结构化日志通道</strong> —— 插件拦截 Godot 的 <code>print()</code> 和 <code>push_error()</code>，通过 socket 以 JSON 格式实时推送给 Agent</li>
+  <li><span class="tag tag-mvp">P1</span> <strong>场景验证</strong> —— <code>validate_scene(path)</code> 调用 <code>ResourceLoader.load()</code> 验证 .tscn 文件是否可加载，返回精确错误信息</li>
+  <li><span class="tag tag-mvp">P1</span> <strong>插件自动发现</strong> —— Agent 技能集检测 Godot 项目是否安装了 godox-plugin，自动切换到插件模式而非文件操作模式</li>
+</ul>
+
+<h3>📅 Nice-to-have（一期后加）</h3>
+<ul>
+  <li><span class="tag tag-nth">P2</span> <strong>调试桥</strong> —— 设置/移除断点、读取调用栈、检查变量值（需 EditorDebuggerPlugin）</li>
+  <li><span class="tag tag-nth">P2</span> <strong>鼠标事件模拟</strong> —— 注入鼠标点击、移动、拖拽事件</li>
+  <li><span class="tag tag-nth">P2</span> <strong>游戏截图通道</strong> —— 插件截取 Viewport 画面并返回给 Agent（替代 OS 级截图）</li>
+  <li><span class="tag tag-nth">P3</span> <strong>资源浏览器 API</strong> —— 列出项目资源、导入新资源、刷新文件系统</li>
+  <li><span class="tag tag-nth">P3</span> <strong>信号连接可视化</strong> —— 返回场景中所有信号连接的关系图</li>
+</ul>
+
+<h3>🚫 明确不做什么</h3>
+<ul>
+  <li><span class="tag tag-wont">不做</span> <strong>编辑器 UI 扩展</strong> —— 不添加新的面板、按钮、dock。插件在后台作为 MCP server 运行，没有用户界面</li>
+  <li><span class="tag tag-wont">不做</span> <strong>Godot 3.x 兼容</strong> —— 锁定 Godot 4.x（EditorPlugin API 在 3.x 和 4.x 不兼容）</li>
+  <li><span class="tag tag-wont">不做</span> <strong>多人协作</strong> —— 一个编辑器实例只服务一个 Agent 连接</li>
+  <li><span class="tag tag-wont">不做</span> <strong>Web 导出</strong> —— 插件只在桌面版编辑器中运行</li>
+</ul>
+
+</div>
+</details>
+
+<details open id="b2">
+<summary>5. 2B / 2C 分析</summary>
+<div class="section-body">
+
+<table>
+  <tr><th>维度</th><th>🎯 To C（个人开发者）</th><th>🏢 To B（工作室 / 团队）</th></tr>
+  <tr>
+    <td><strong>用户是谁</strong></td>
+    <td>独立游戏开发者、AI 编程重度用户、Godot 模组作者</td>
+    <td>小型游戏工作室、游戏开发培训机构、Godot 工具链厂商</td>
+  </tr>
+  <tr>
+    <td><strong>付费意愿</strong></td>
+    <td>低——插件是开源工具集的增强组件，期望免费</td>
+    <td>中等——如果插件能提升团队效率（CI 验证、批量场景检查），愿意为托管/支持付费</td>
+  </tr>
+  <tr>
+    <td><strong>决策链</strong></td>
+    <td>单人决策——有用就装</td>
+    <td>技术负责人评估 → 试用 → 决定是否加入团队工作流</td>
+  </tr>
+  <tr>
+    <td><strong>核心功能差异</strong></td>
+    <td>即装即用：Agent 写代码时自动发现插件并切换到编辑器 API 模式</td>
+    <td>批量场景验证 + CI 集成 + 操作审计日志 + 版本兼容性担保</td>
+  </tr>
+  <tr>
+    <td><strong>获客方式</strong></td>
+    <td>Godot Asset Library 发布 + GitHub + Reddit/X 展示</td>
+    <td>直接 Outreach + 企业案例 + 开源社区口碑</td>
+  </tr>
+</table>
+
+<p><strong>主次关系：To C 先行。</strong> 插件作为 Godot Reasonix 技能集的增强组件免费开源发布。当 C 端用户达到一定规模（GitHub Star &gt; 500），自然出现 B 端规模化需求时再推付费版。</p>
+
+</div>
+</details>
+
+<details open id="competition">
+<summary>6. 竞争分析与 SWOT</summary>
+<div class="section-body">
+
+<h3>竞争格局矩阵</h3>
+
+<table>
+  <tr><th>竞品</th><th>定位</th><th>目标用户</th><th>优势</th><th>劣势</th><th>与本产品差异</th></tr>
+  <tr>
+    <td>Godot 官方编辑器</td>
+    <td>完整游戏开发 IDE</td>
+    <td>所有 Godot 用户</td>
+    <td>原生支持所有编辑器功能</td>
+    <td>无 API 暴露给外部 Agent，无可编程接口</td>
+    <td>插件给了 Agent 一个 API 通道，不替代编辑器本身</td>
+  </tr>
+  <tr>
+    <td>Godot GDScript 调试器</td>
+    <td>运行时调试</td>
+    <td>Godot 开发者</td>
+    <td>完整的断点/步进/变量监视</td>
+    <td>需要人手动操作，Agent 无法调用</td>
+    <td>插件通过 MCP 暴露调试能力给 Agent</td>
+  </tr>
+  <tr>
+    <td>现有 Godot Reasonix 文件操作模式</td>
+    <td>Agent 通过文件系统操作 Godot 项目</td>
+    <td>AI Agent 用户</td>
+    <td>无需编辑器、跨平台、可版本控制</td>
+    <td>.tscn 格式猜测、不能输入模拟、日志靠正则</td>
+    <td>插件是文件操作模式的进化版——直接从编辑器 API 获取真实状态</td>
+  </tr>
+  <tr>
+    <td>VSCode Copilot + Godot 扩展</td>
+    <td>AI 辅助代码编写</td>
+    <td>使用 VSCode 的 Godot 开发者</td>
+    <td>强大的代码补全和生成</td>
+    <td>只能写 .gd 代码，不能操作场景和调试</td>
+    <td>插件直接与编辑器对话，不只是代码生成</td>
+  </tr>
+</table>
+
+<h3>SWOT 分析</h3>
+
+<table>
+  <tr><th></th><th>正向</th><th>负向</th></tr>
+  <tr>
+    <td><strong>内部</strong></td>
+    <td>
+      <strong>S（优势）</strong>
+      <ul>
+        <li>Godot Reasonix 技能集已有完整的 M1-M11 工具链和 100 测试</li>
+        <li>技能集已在实际项目中被验证</li>
+        <li>MCP 协议是 Reasonix 原生支持的，插件接入成本低</li>
+      </ul>
+    </td>
+    <td>
+      <strong>W（劣势）</strong>
+      <ul>
+        <li>团队无 Godot EditorPlugin 开发经验</li>
+        <li>Godot 的 MCP 生态为 0——需要从零建</li>
+        <li>EditorPlugin API 文档不完整，需要试错</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td><strong>外部</strong></td>
+    <td>
+      <strong>O（机会）</strong>
+      <ul>
+        <li>Godot 4.x 用户快速增长（Steam 占比 ~3%）</li>
+        <li>AI 编程 Agent 用户量在快速增长</li>
+        <li>目前市场上无任何 Godot Editor MCP 插件——先发优势</li>
+      </ul>
+    </td>
+    <td>
+      <strong>T（威胁）</strong>
+      <ul>
+        <li>Godot 官方可能自己实现 MCP 或类似协议</li>
+        <li>EditorPlugin API 在 Godot 小版本间有破坏性变更</li>
+        <li>社区可能很快出现竞品 MCP 插件</li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
+</div>
+</details>
+
+<details open id="design">
+<summary>7. 设计理念</summary>
+<div class="section-body">
+
+<h3>体验关键词</h3>
+<p>
+  <span class="badge">零配置</span>
+  <span class="badge">透明代理</span>
+  <span class="badge">优雅降级</span>
+</p>
+
+<ul>
+  <li><strong>零配置（Zero Config）</strong> —— 插件安装即用。Agent 技能集自动检测编辑器是否运行、插件是否加载，无需用户手动启动 MCP server 或配置端口。</li>
+  <li><strong>透明代理（Transparent Proxy）</strong> —— Agent 调用插件 API 就像直接调用 Godot 编辑器内部函数一样，不需要关心序列化格式、端口管理、连接重连。插件只是"让编辑器可以被代码调用"。</li>
+  <li><strong>优雅降级（Graceful Degradation）</strong> —— 如果插件未安装或编辑器未运行，技能集自动 fallback 到现有的文件操作模式。用户不会看到报错，只会看到 Agent 说"走文件模式"。</li>
+</ul>
+
+<h3>核心交互原则</h3>
+<ol>
+  <li><strong>编辑器在，走插件；编辑器不在，走文件。</strong> 自动检测、自动切换，用户无感知。</li>
+  <li><strong>每次操作都有确认回读。</strong> 插件写入场景属性后，立即回读确认值与预期一致。不信任"写进去就对了"。</li>
+  <li><strong>MCP 是唯一接口。</strong> 不额外暴露 HTTP API 或 WebSocket——统一走 Reasonix 原生 MCP 协议，减少攻击面和维护成本。</li>
+</ol>
+
+<h3>视觉风格方向</h3>
+<p>插件没有用户界面。面向用户的「界面」是 Agent 控制台的日志输出：</p>
+<ul>
+  <li>插件连接成功：<span style="color:var(--success)">[godox] ✅ 已连接到 Godot 编辑器 (v4.3)</span></li>
+  <li>插件操作场景：<span style="color:var(--text-secondary)">[godox] 📦 set_node_property(Player, position, {x:100, y:200}) → OK</span></li>
+  <li>插件验证场景：<span style="color:var(--text-secondary)">[godox] ✅ scenes/Level.tscn — 可加载，2 warnings</span></li>
+  <li>降级到文件模式：<span style="color:var(--warning)">[godox] ⚠️ 编辑器未运行，切换到文件操作模式</span></li>
+</ul>
+<p>整体调性：<strong>可靠、透明、不打扰</strong>——让用户感觉"编辑器本身在帮 Agent 做事"。</p>
+
+</div>
+</details>
+
+<details open id="risk">
+<summary>8. 风险</summary>
+<div class="section-body">
+
+<table>
+  <tr><th>风险类别</th><th>风险描述</th><th>可能性</th><th>影响</th><th>缓解措施</th></tr>
+  <tr>
+    <td>市场风险</td>
+    <td>市场需求过小——「用 AI Agent 调试 Godot」是一个极细分的需求</td>
+    <td>高</td>
+    <td>中</td>
+    <td>插件作为免费开源工具发布，不依赖插件转化收入；它提升现有技能集的价值，而非独立获客</td>
+  </tr>
+  <tr>
+    <td>运营风险</td>
+    <td>Godot EditorPlugin API 在 4.x 小版本间有破坏性变更</td>
+    <td>中</td>
+    <td>高</td>
+    <td>锁定最低支持版本（如 4.3+），文档中明确声明兼容范围；CI 用多个 Godot 版本测试</td>
+  </tr>
+  <tr>
+    <td>运营风险</td>
+    <td>MCP stdio 模式下插件的进程生命周期管理复杂（编辑器退出时插件进程未清理）</td>
+    <td>中</td>
+    <td>中</td>
+    <td>插件在 EditorPlugin._exit_tree() 中强制清理子进程；Agent 侧设超时兜底</td>
+  </tr>
+  <tr>
+    <td>增长风险</td>
+    <td>冷启动——没有用户知道这个插件存在</td>
+    <td>高</td>
+    <td>中</td>
+    <td>插件随 Godot Reasonix 技能集 v3.0 一起发布；在 Godot Asset Library 上架；在 r/godot 和 AI 编程社区发布 Demo 视频</td>
+  </tr>
+  <tr>
+    <td>变现风险</td>
+    <td>开源插件无法直接变现</td>
+    <td>中</td>
+    <td>低</td>
+    <td>插件本身不开源也不收费——它提升技能集的价值，技能集通过企业许可证/LLM API 代理变现</td>
+  </tr>
+</table>
+
+</div>
+</details>
+
+<footer>
+  <p>📄 本文档仅描述 WHAT 与 WHY — 不包含技术方案。</p>
+  <p>后续由 pipeline 架构师角色读取本文档，转换为技术 PRD 与实现计划。</p>
+  <p>Godox Plugin · 产品设计文档 v1.0 · 2026-07-12</p>
+</footer>
+
+</div>
+</div>
+</body>
+</html>

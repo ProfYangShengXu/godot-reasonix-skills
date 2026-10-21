@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>嵌入式工程技能集 — 产品设计文档</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --accent: #2563eb;
+    --accent-light: #dbeafe;
+    --dark: #1a1a2e;
+    --text: #1e293b;
+    --text-secondary: #555;
+    --border: #dee2e6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.7;
+  }
+  header {
+    background: linear-gradient(135deg, #0f172a 0%, #2563eb 100%);
+    color: white; padding: 2.5rem 2rem; text-align: center;
+  }
+  header h1 { font-size: 2rem; }
+  header .sub { font-size: 1.05rem; opacity: .85; margin-top: .4rem; }
+  header .meta { margin-top: 1rem; font-size: .85rem; opacity: .6; }
+
+  nav.toc {
+    position: sticky; top: 0; background: #fff; z-index: 10;
+    padding: .8rem 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow-x: auto;
+    white-space: nowrap; font-size: .88rem;
+  }
+  nav.toc a { color: var(--accent); margin-right: 1.2rem; text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+
+  main { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+  section {
+    background: var(--card); border-radius: 12px; padding: 2rem;
+    margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  section h2 { font-size: 1.3rem; color: var(--accent); margin-bottom: 1rem;
+    padding-bottom: .5rem; border-bottom: 3px solid var(--accent-light); }
+  h3 { margin: 1.2rem 0 .6rem; }
+  p, li { color: var(--text-secondary); margin-bottom: .5rem; }
+  ul, ol { padding-left: 1.4rem; }
+
+  table { width: 100%; border-collapse: collapse; margin: .8rem 0; font-size: .9rem; }
+  th, td { border: 1px solid var(--border); padding: .5rem .7rem; text-align: left; vertical-align: top; }
+  th { background: var(--accent-light); font-weight: 600; color: var(--accent); }
+  tr:nth-child(even) td { background: #fafbfc; }
+
+  .tag {
+    display: inline-block; padding: .1rem .5rem; border-radius: 4px;
+    font-size: .75rem; font-weight: 600; margin-right: .2rem;
+  }
+  .tag-must { background: #d4edda; color: #155724; }
+  .tag-nice { background: #fff3cd; color: #856404; }
+  .tag-out { background: #f8d7da; color: #721c24; }
+
+  .swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .swot-card { padding: 1rem; border-radius: 8px; font-size: .9rem; }
+  .swot-s { background: #dbeafe; }
+  .swot-w { background: #fef2f2; }
+  .swot-o { background: #ecfdf5; }
+  .swot-t { background: #fffbeb; }
+  .swot-card h4 { margin-bottom: .5rem; }
+
+  footer { text-align: center; color: var(--text-secondary); font-size: .85rem; padding: 2rem 0; }
+
+  @media (max-width: 768px) {
+    header { padding: 1.5rem 1rem; }
+    header h1 { font-size: 1.4rem; }
+    section { padding: 1.2rem; }
+    .swot-grid { grid-template-columns: 1fr; }
+    table { font-size: .8rem; }
+    th, td { padding: .35rem .4rem; }
+  }
+  @media print {
+    nav.toc { display: none; }
+    body { font-size: 11pt; }
+    section { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔧 嵌入式工程技能集</h1>
+  <div class="sub">BOBANANA5 外部工具集 — 让 AI Agent 辅助嵌入式硬件开发的每一步</div>
+  <div class="meta">产品设计文档 v1.0 · 生成时间：2026-07 · 由 pipeline 转技术 PRD</div>
+</header>
+
+<nav class="toc">
+  <a href="#s1">背景与目标</a>
+  <a href="#s2">数据指标</a>
+  <a href="#s3">用户画像</a>
+  <a href="#s4">MVP 定义</a>
+  <a href="#s5">2B/2C 分析</a>
+  <a href="#s6">竞争分析</a>
+  <a href="#s7">设计理念</a>
+  <a href="#s8">风险</a>
+</nav>
+
+<main>
+
+<!-- 1. 背景与目标 -->
+<section id="s1">
+  <h2>1. 背景与目标</h2>
+
+  <h3>现实问题</h3>
+  <p>嵌入式开发是软件工程中最碎片化的领域——每个芯片平台有自己的工具链（IDE、编译器、烧录器、调试协议）、自己的 SDK、自己的寄存器手册、自己的踩坑经验。一个 MCU 工程师换一颗新芯片的"上手指南"时间通常以周计算。</p>
+  <p>现有的 AI 编程助手（Copilot、Cursor、Reasonix）擅长通用软件（写 React、调 API、写 Python），但在嵌入式领域寸步难行——它们不知道 OpenOCD 的配置文件格式、不会算分频系数、不认识 CMSIS-DAP 和 J-Link 的区别。结果是：嵌入式开发者仍然对着十几份 PDF 手册手动配寄存器，AI 帮不上忙。</p>
+
+  <h3>一句话定位</h3>
+  <blockquote style="border-left:4px solid var(--accent);background:var(--accent-light);padding:.8rem 1rem;border-radius:0 8px 8px 0;font-style:italic;">
+    "面向嵌入式全栈的 AI Agent 工具箱 — 每个角色一个技能卡，Agent 按需加载角色能力。"
+  </blockquote>
+
+  <h3>现存方案痛点</h3>
+  <ul>
+    <li><strong>IDE 学习成本极高</strong>：STM32CubeIDE、Keil MDK、IAR、Vivado、Quartus……每个工具都有自己的界面和配置逻辑</li>
+    <li><strong>官方文档分散且版本敏感</strong>：一份 HAL 库手册 2000+ 页，且不同芯片版本有细微差异</li>
+    <li><strong>烧录/调试命令与硬件绑定</strong>：OpenOCD、J-Link Commander、ST-Link CLI、pyOCD——命令参数随调试器、目标芯片、OS 变化</li>
+    <li><strong>工程师需要同时懂 MCU、FPGA、Linux、电力电子</strong>：知识面太广，没人能全记住</li>
+    <li><strong>现有 AI 工具在嵌入式领域"失语"</strong>：不知道 CubeMX CLI 的参数、无法理解 .ioc 文件格式</li>
+  </ul>
+</section>
+
+<!-- 2. 数据指标 -->
+<section id="s2">
+  <h2>2. 数据指标（OKR）</h2>
+
+  <table>
+    <tr><th>层级</th><th>指标</th><th>目标值</th><th>衡量方式</th></tr>
+    <tr>
+      <td><strong>North Star</strong></td>
+      <td>月活跃角色实例数</td>
+      <td>≥ 2000 / 月</td>
+      <td>GitHub Stars + 技能调用次数</td>
+    </tr>
+    <tr>
+      <td><strong>KR-1</strong></td>
+      <td>角色覆盖主流嵌入式领域</td>
+      <td>16 个角色全部上架且有至少 1 个验证场景</td>
+      <td>角色清单 + 场景测试报告</td>
+    </tr>
+    <tr>
+      <td><strong>KR-2</strong></td>
+      <td>从零到"工具链跑通"的时长</td>
+      <td>≤ 30 分钟（含软件安装指引）</td>
+      <td>新用户实操计时</td>
+    </tr>
+    <tr>
+      <td><strong>KR-3</strong></td>
+      <td>技能调用成功率</td>
+      <td>≥ 85%（排除用户环境问题）</td>
+      <td>Agent 调用 → 退出码 0 比例</td>
+    </tr>
+  </table>
+</section>
+
+<!-- 3. 用户画像 -->
+<section id="s3">
+  <h2>3. 用户画像</h2>
+
+  <table>
+    <tr><th>维度</th><th>画像 A：MCU 固件新手</th><th>画像 B：嵌入式全栈老兵</th><th>画像 C：FPGA/数字逻辑工程师</th></tr>
+    <tr><td><strong>身份/场景</strong></td><td>在校学生或转行人员，刚接触 STM32/ESP32，学校实验室做课设或毕设</td><td>5 年+ 嵌入式经验，做 Linux BSP、驱动、QT 应用，熟悉多平台但不想记每个 CLI 参数</td><td>数字设计方向，写 Verilog/VHDL，用 Vivado/Quartus，需要仿真 + 上板验证</td></tr>
+    <tr><td><strong>核心痛点</strong></td><td>环境搭建就要花一整天；寄存器配置、时钟树、引脚复用完全不懂</td><td>跨平台切换时重复查手册；烧录脚本每个项目都要重新写；不想手动处理 Makefile 和链接脚本</td><td>仿真 → 综合 → 约束文件的环节总卡住；Testbench 搭建费时；时序收敛全靠经验</td></tr>
+    <tr><td><strong>使用频率</strong></td><td>每周 3-5 次（实验/课设期间密集）</td><td>每日使用</td><td>项目周期内每日，间歇期每周 1-2 次</td></tr>
+    <tr><td><strong>核心诉求</strong></td><td>"帮我搭好环境，告诉我每一步该干什么，别让我看 2000 页手册"</td><td>"每个平台的常用操作我都知道，帮我记住那些犄角旮旯的参数"</td><td>"帮我写 Testbench、跑仿真，告诉我波形对不对"</td></tr>
+    <tr><td><strong>技术熟练度</strong></td><td>低-中（会 C 但不会配环境）</td><td>高（能看芯片手册、写 linker script）</td><td>中-高（会写 HDL 但对工具链不熟）</td></tr>
+    <tr><td><strong>替代方案</strong></td><td>看 B 站视频 + 复制粘贴 CSDN 代码</td><td>自己写脚本 + 记 Notion 笔记 + Google</td><td>同事代码 + 厂商 FAE 支持 + 论坛求助</td></tr>
+  </table>
+</section>
+
+<!-- 4. MVP -->
+<section id="s4">
+  <h2>4. MVP 定义</h2>
+
+  <h3>Must-have（优先级排序）</h3>
+  <ol>
+    <li><span class="tag tag-must">P0</span> <strong>角色系统框架</strong>：16 个角色卡（SKILL.md）独立存储，角色名片 + AI 指令 + 工具链引用，嵌入式架构师角色可编排子角色</li>
+    <li><span class="tag tag-must">P0</span> <strong>MCU 固件工程师</strong>：CubeMX2 CLI 调用 → HAL 代码框架生成 → Keil/IAR/ARM GCC 编译 → OpenOCD / J-Link 烧录</li>
+    <li><span class="tag tag-must">P0</span> <strong>FPGA 工程师</strong>：Verilog/VHDL Testbench 生成 → ModelSim/Questa 仿真 → 自动比对波形 → Vivado/Quartus 综合下载</li>
+    <li><span class="tag tag-must">P0</span> <strong>硬件信号查询引擎</strong>：搜索芯片数据手册 → 提取寄存器地址/引脚定义/时序参数 → 以结构化表格呈现</li>
+    <li><span class="tag tag-must">P0</span> <strong>安装示例文档</strong>：每角色附带面向零基础用户的安装指引（含软件下载地址、环境变量设置、首次运行验证）</li>
+    <li><span class="tag tag-must">P1</span> <strong>Linux 应用/驱动工程师</strong>：交叉编译工具链配置 → Device Tree 编辑 → Kernel Module 编译 → scp/tftp 部署到目标板</li>
+    <li><span class="tag tag-must">P1</span> <strong>烧录/调试统一接口</strong>：抽象 OpenOCD、J-Link、ST-Link、DAP-Link、pyOCD 为统一 CLI 命令</li>
+    <li><span class="tag tag-must">P1</span> <strong>QT/C++ 编译工程支持</strong>：qmake/cmake 构建 → 交叉编译 → 部署到目标板</li>
+  </ol>
+
+  <h3>Nice-to-have（二期）</h3>
+  <ul>
+    <li><span class="tag tag-nice">P2</span> 电源工程师/射频工程师：LTspice 仿真 + S 参数分析 + PCB 阻抗匹配检查</li>
+    <li><span class="tag tag-nice">P2</span> 功能安全工程师：MISRA-C 检查 + 安全分析报告自动化</li>
+    <li><span class="tag tag-nice">P2</span> 模型量化部署工程师：TensorFlow Lite / ONNX → MCU/边缘 NPU 部署流水线</li>
+    <li><span class="tag tag-nice">P2</span> BMS 软件工程师：电池 SOX 算法验证 + BQ76952/ADBMS 等芯片驱动模板</li>
+    <li><span class="tag tag-nice">P3</span> CI/CD 集成：GitHub Actions 一键 STM32/FGPA 编译 + 仿真回归</li>
+  </ul>
+
+  <h3>🚫 明确不做什么</h3>
+  <ul>
+    <li><span class="tag tag-out">不做</span> 硬件原理图自动设计（让 AI 画电路图）—— 这需要电气工程 AI 训练，超出范围</li>
+    <li><span class="tag tag-out">不做</span> 实时操作系统调度器实现 —— 只封装 FreeRTOS/Zephyr 的配置和 API 调用</li>
+    <li><span class="tag tag-out">不做</span> 代做竞赛/考试题目 —— 工具集提供方法，由用户自己完成</li>
+    <li><span class="tag tag-out">不做</span> PCB Layout 自动布线 —— 保留 AI 建议但最终由人在 EDA 中操作</li>
+    <li><span class="tag tag-out">不做</span> 任意芯片支持 —— 一期只覆盖 STM32F/H/G 系列 + ESP32 + 通用 FPGA (Cyclone IV/V, Artix-7)</li>
+  </ul>
+</section>
+
+<!-- 5. 2B/2C 分析 -->
+<section id="s5">
+  <h2>5. 2B / 2C 分析</h2>
+
+  <table>
+    <tr><th>维度</th><th>To C（个人工程师）</th><th>To B（企业/实验室）</th></tr>
+    <tr><td>用户是谁</td><td>嵌入式学生、独立开发者、小团队硬件工程师</td><td>企业嵌入式部门、高校实验室、电赛/机器人赛团队</td></tr>
+    <tr><td>付费意愿</td><td>低-中，愿意为"省时间"付小额；免费开源优先</td><td>中-高，愿意为团队效率提升和企业级支持付费</td></tr>
+    <tr><td>决策链</td><td>个人看到 → Star → 试用 → 决定</td><td>技术负责人评估 → 团队试用 → 采购决策</td></tr>
+    <tr><td>核心功能差异</td><td>快速上手 + 减少查手册时间 + 安装教程</td><td>团队协作 + 定制化角色 + 技术支持和 SLA</td></tr>
+    <tr><td>获客方式</td><td>GitHub 开源 + 电子工程社区 + B站/知乎</td><td>厂商合作 + 高校推广 + 技术会议演讲</td></tr>
+  </table>
+
+  <p><strong>主次关系：To C 先行，To B 后置。</strong>MVP 阶段以开源免费形式面向个人开发者。当 C 端积累足够用户和模板库后，推出企业版（私有部署 / 定制化 / 技术支持）。</p>
+</section>
+
+<!-- 6. 竞争分析 -->
+<section id="s6">
+  <h2>6. 竞争分析与 SWOT</h2>
+
+  <h3>竞争格局</h3>
+  <table>
+    <tr><th>竞品/替代方案</th><th>定位</th><th>优势</th><th>劣势</th><th>与本产品差异</th></tr>
+    <tr>
+      <td>STM32CubeMX GUI</td>
+      <td>ST 官方图形化配置工具</td>
+      <td>官方支持，引脚可视化，冲突检查完善</td>
+      <td>需手动操作 GUI，不能被 AI 脚本调用（CLI 功能有限）</td>
+      <td>本工具把 CubeMX CLI 暴露给 Agent，可脚本化</td>
+    </tr>
+    <tr>
+      <td>PlatformIO</td>
+      <td>嵌入式开发统一平台</td>
+      <td>统一 CLI，多框架支持，库管理方便</td>
+      <td>配置格式固定，不支持高级调试、自定义 Linker Script、非标准烧录器</td>
+      <td>角色化处理不同工具链，更灵活</td>
+    </tr>
+    <tr>
+      <td>OpenOCD + custom scripts</td>
+      <td>开源调试/烧录工具</td>
+      <td>灵活，支持多平台</td>
+      <td>配置复杂，每次换芯片要重写配置文件</td>
+      <td>封装成统一接口，根据芯片型号自动选配置</td>
+    </tr>
+    <tr>
+      <td>厂商 FAE 支持</td>
+      <td>芯片厂商技术支持</td>
+      <td>专业，官方权威</td>
+      <td>响应慢（几天），不覆盖非官方方案</td>
+      <td>即时响应，24/7 可用</td>
+    </tr>
+  </table>
+
+  <h3>SWOT 分析</h3>
+  <div class="swot-grid">
+    <div class="swot-card swot-s">
+      <h4>S 优势</h4>
+      <ul>
+        <li>已有 NUEDC Skills 项目中 7 个技能的成功实践和社区验证</li>
+        <li>16 个角色覆盖嵌入式全链路，填补 AI 在嵌入式领域的空白</li>
+        <li>每个角色独立存储，可按需加载不冲突</li>
+        <li>面向"什么都不懂的用户"的安装文档是其独特竞争力</li>
+      </ul>
+    </div>
+    <div class="swot-card swot-w">
+      <h4>W 劣势</h4>
+      <ul>
+        <li>团队规模小（作者个人），维护 16 个角色需要大量精力</li>
+        <li>嵌入式工具链版本碎片化严重（Keil 5.38 vs 5.39 就有差异）</li>
+        <li>依赖第三方闭源工具（Keil、Quartus、Vivado）——这些工具无法开源分发</li>
+        <li>缺乏真实的硬件测试环境覆盖所有芯片组合</li>
+      </ul>
+    </div>
+    <div class="swot-card swot-o">
+      <h4>O 机会</h4>
+      <ul>
+        <li>AI Agent 生态爆发：Reasonix、Cursor、Claude Code 都在探索垂直领域</li>
+        <li>嵌入式领域 AI 工具几乎空白，是蓝海市场</li>
+        <li>RISC-V 生态崛起带来更多碎片化需求</li>
+        <li>高校电赛/机器人赛每年有数万参赛者急需降低工具链门槛</li>
+      </ul>
+    </div>
+    <div class="swot-card swot-t">
+      <h4>T 威胁</h4>
+      <ul>
+        <li>ST/ARM/AMD 等大厂可能推出自己的 AI 编程助手（官方集成优势）</li>
+        <li>嵌入式开发者对 AI 的信任度不高——"烧录不能出错"的零容忍心态</li>
+        <li>工具链版本更新可能破坏已有角色配置</li>
+        <li>竞品快速跟进——嵌入式 AI 辅助的门槛主要在知识积累，不是技术壁垒</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 7. 设计理念 -->
+<section id="s7">
+  <h2>7. 设计理念</h2>
+
+  <h3>体验关键词</h3>
+  <p>
+    <span style="display:inline-block;background:var(--accent-light);color:var(--accent);padding:.15rem .6rem;border-radius:20px;font-size:.85rem;font-weight:600;margin-right:.4rem;">角色即文档</span>
+    <span style="display:inline-block;background:var(--accent-light);color:var(--accent);padding:.15rem .6rem;border-radius:20px;font-size:.85rem;font-weight:600;margin-right:.4rem;">可组合</span>
+    <span style="display:inline-block;background:var(--accent-light);color:var(--accent);padding:.15rem .6rem;border-radius:20px;font-size:.85rem;font-weight:600;margin-right:.4rem;">零环境门槛</span>
+    <span style="display:inline-block;background:var(--accent-light);color:var(--accent);padding:.15rem .6rem;border-radius:20px;font-size:.85rem;font-weight:600;">确定性输出</span>
+  </p>
+  <ul>
+    <li><strong>角色即文档</strong>：每个角色一张独立的 SKILL.md，包含：身份卡、能力范围、工具链路径、常见操作指令、踩坑 FAQ。Agent 加载角色即获得该领域能力。</li>
+    <li><strong>可组合</strong>：嵌入式架构师角色可编排子角色——例如"用 MCU 固件工程师生成代码，再调用 BSP 工程师写 Linux 驱动"。</li>
+    <li><strong>零环境门槛</strong>：每个角色都配一份面向"什么都不懂"的安装文档——软件哪里下载、环境变量怎么设、验证命令是什么。</li>
+    <li><strong>确定性输出</strong>：烧录、编译、仿真操作必须输出完整 stdout/stderr 和退出码，不靠 AI 猜测。</li>
+  </ul>
+
+  <h3>核心交互原则</h3>
+  <ol>
+    <li><strong>用户说场景，Agent 选角色。</strong>用户不需要知道哪个角色负责什么——描述问题（"我要烧录 STM32F407 的程序"），Agent 路由到对应角色。</li>
+    <li><strong>先查手册，再操作。</strong>涉及硬件寄存器、引脚号、时钟频率的操作，必须先搜索官方文档，不能凭记忆。</li>
+    <li><strong>安装即验证。</strong>每个工具链的安装完成后，必须运行一条验证命令确认可用。</li>
+  </ol>
+
+  <h3>视觉风格</h3>
+  <p>这是 AI Agent 技能集，不是用户界面产品。无传统 GUI。</p>
+  <ul>
+    <li>终端输出：工业感灰底白字，绿色 CHECK / 红色 FAIL</li>
+    <li>文档排版：参考 ST/STM32 官方文档风格——清晰的分层编号 + 表格化参数说明</li>
+    <li>角色命名：中文职业名称 + 英文标识符（如 <code>stm32-firmware-engineer</code>），确保机器可读</li>
+  </ul>
+</section>
+
+<!-- 8. 风险 -->
+<section id="s8">
+  <h2>8. 风险</h2>
+
+  <table>
+    <tr><th>风险类别</th><th>风险描述</th><th>可能性</th><th>影响</th><th>缓解措施</th></tr>
+    <tr>
+      <td>市场风险</td>
+      <td>目标用户群太小——需要 AI Agent 工具 + 做嵌入式开发的交集</td>
+      <td>中</td>
+      <td>高</td>
+      <td>先用 NUEDC（电赛）场景验证产品-市场匹配；电赛每年数万参赛者是最直接的种子用户</td>
+    </tr>
+    <tr>
+      <td>运营风险</td>
+      <td>工具链版本更新导致角色指令失效（STM32CubeMX、Keil 每年更新）</td>
+      <td>高</td>
+      <td>中</td>
+      <td>每个角色标注已验证的工具版本号；建立版本兼容性矩阵；接受社区 PR 更新</td>
+    </tr>
+    <tr>
+      <td>增长风险</td>
+      <td>冷启动——无人知道这个工具集，无人贡献新角色</td>
+      <td>高</td>
+      <td>中</td>
+      <td>从 NUEDC Skills 已有用户迁移；在嵌入式社区（电子发烧友、21ic、eeworld）推广</td>
+    </tr>
+    <tr>
+      <td>变现风险</td>
+      <td>开源免费的定位下，难找到可持续的收入模型</td>
+      <td>中</td>
+      <td>中</td>
+      <td>核心开源免费 + 企业版（私有部署/SLA/定制化角色）收费；社区捐赠</td>
+    </tr>
+  </table>
+</section>
+
+</main>
+
+<footer>
+  <p>嵌入式工程技能集 · 产品设计文档 v1.0 · 由 BOBANANA5 docs skill 生成</p>
+  <p>本文档仅描述 WHAT 和 WHY · 后续由 pipeline 架构师转为技术 PRD</p>
+</footer>
+
+</body>
+</html>

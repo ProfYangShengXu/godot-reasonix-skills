@@ -84,6 +84,9 @@ const MAX_LINES = 100_000;
 /** 最大条目数 */
 const MAX_ENTRIES = 50_000;
 
+/** 估算每行日志的耗时（ms），用于无时间戳时推算相对时间 */
+const ESTIMATED_MS_PER_LINE = 5;
+
 // ─── 正则模式 ───
 
 /** Godot 引擎 ERROR 消息：  ERROR: <message> */
@@ -183,8 +186,8 @@ function isIgnorableLine(line: string): boolean {
  * 计算相对毫秒时间戳
  */
 function computeTimestamp(lineIndex: number, startTimeMs: number): number {
-  // 粗略估计：每行约 5ms（基于典型日志输出速率）
-  return startTimeMs + lineIndex * 5;
+  // 粗略估计：基于典型日志输出速率
+  return startTimeMs + lineIndex * ESTIMATED_MS_PER_LINE;
 }
 
 /**
@@ -206,11 +209,9 @@ export function ParseLogText(
 
   const entries: LogEntry[] = [];
   let lastEntry: LogEntry | null = null;
-  let lineCount = 0;
 
   for (let i = 0; i < lines.length && entries.length < MAX_ENTRIES; i++) {
     const line = lines[i]!;
-    lineCount++;
 
     if (isIgnorableLine(line)) continue;
 

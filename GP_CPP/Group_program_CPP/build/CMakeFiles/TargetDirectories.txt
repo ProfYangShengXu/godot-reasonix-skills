@@ -1,0 +1,14 @@
+C:/Users/伍昶帆/Desktop/Group_program_CPP/Group_program_CPP/build/CMakeFiles/sport_evaluation_common.dir
+C:/Users/伍昶帆/Desktop/Group_program_CPP/Group_program_CPP/build/CMakeFiles/sport_evaluation_client.dir
+C:/Users/伍昶帆/Desktop/Group_program_CPP/Group_program_CPP/build/CMakeFiles/sport_evaluation_server.dir
+C:/Users/伍昶帆/Desktop/Group_program_CPP/Group_program_CPP/build/CMakeFiles/chat_server.dir
+C:/Users/伍昶帆/Desktop/Group_program_CPP/Group_program_CPP/build/CMakeFiles/edit_cache.dir
+C:/Users/伍昶帆/Desktop/Group_program_CPP/Group_program_CPP/build/CMakeFiles/rebuild_cache.dir
+C:/Users/伍昶帆/Desktop/Group_program_CPP/Group_program_CPP/build/CMakeFiles/sport_evaluation_common_autogen_timestamp_deps.dir
+C:/Users/伍昶帆/Desktop/Group_program_CPP/Group_program_CPP/build/CMakeFiles/sport_evaluation_common_autogen.dir
+C:/Users/伍昶帆/Desktop/Group_program_CPP/Group_program_CPP/build/CMakeFiles/sport_evaluation_client_autogen_timestamp_deps.dir
+C:/Users/伍昶帆/Desktop/Group_program_CPP/Group_program_CPP/build/CMakeFiles/sport_evaluation_client_autogen.dir
+C:/Users/伍昶帆/Desktop/Group_program_CPP/Group_program_CPP/build/CMakeFiles/sport_evaluation_server_autogen_timestamp_deps.dir
+C:/Users/伍昶帆/Desktop/Group_program_CPP/Group_program_CPP/build/CMakeFiles/sport_evaluation_server_autogen.dir
+C:/Users/伍昶帆/Desktop/Group_program_CPP/Group_program_CPP/build/CMakeFiles/chat_server_autogen_timestamp_deps.dir
+C:/Users/伍昶帆/Desktop/Group_program_CPP/Group_program_CPP/build/CMakeFiles/chat_server_autogen.dir

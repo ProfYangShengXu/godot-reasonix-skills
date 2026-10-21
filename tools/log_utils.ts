@@ -140,11 +140,8 @@ export async function GenerateLogScript(
     const targetPath = join(targetDir, "log_utils.gd");
 
     try {
-      // 确保目录存在（简单检查，失败由 writeFile 抛出可读错误）
-      await access(targetDir).catch(() => {
-        // 目录不存在，不做自动创建——应由 ScaffoldProject 保证 scripts/ 存在
-        throw new Error(`目标目录不存在: ${targetDir}，请先用 ScaffoldProject 创建项目`);
-      });
+      // 校验 scripts/ 目录存在（不存在则由下方 catch 返回可读错误）
+      await access(targetDir);
 
       await writeFile(targetPath, scriptContent, "utf-8");
       return {
@@ -290,7 +287,7 @@ async function main() {
     } else {
       console.log(result.script_content);
     }
-  } else if (cmd === "inject" && args.length >= 4) {
+  } else if (cmd === "inject" && args.length >= 5) {
     const filePath = args[1];
     const funcName = args[2];
     const level = args[3] as InjectPoint["level"];
