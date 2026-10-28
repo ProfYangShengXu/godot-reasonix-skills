@@ -337,7 +337,11 @@ async function callLLMAPI(
  * 基于规则的降级诊断（无 LLM 时使用）
  */
 function ruleBasedDiagnosis(
-  summary: { stats: { errors: number; warnings: number }; top_errors: Array<{ file: string; line: number; count: number; example: string }>; diagnosis_hints: string[] },
+  summary: {
+    stats: { errors: number; warnings: number };
+    top_errors: Array<{ file: string; line: number; count: number; example: string }>;
+    diagnosis_hints: string[];
+  },
   _entries: LogEntry[],
 ): DiagnosisReport {
   if (summary.stats.errors === 0 && summary.stats.warnings === 0) {

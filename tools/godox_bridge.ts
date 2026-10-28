@@ -59,6 +59,9 @@ const PLUGIN_CFG = join("addons", "godox", "plugin.cfg");
 const INPUT_UDP_PORT = 42069;
 const LOG_TCP_PORT = 42070;
 
+/** 端口连通性探测超时（ms），TCP/UDP 探活共用 */
+const PROBE_TIMEOUT_MS = 500;
+
 // ─── G5-A1: 检测插件 ───
 
 /**
@@ -213,12 +216,12 @@ export async function sendInput(
 function checkPort(port: number, type: "tcp" | "udp"): Promise<boolean> {
   return new Promise((resolve) => {
     if (type === "tcp") {
-      const socket = createConnection({ host: "127.0.0.1", port, timeout: 500 }, () => {
+      const socket = createConnection({ host: "127.0.0.1", port, timeout: PROBE_TIMEOUT_MS }, () => {
         socket.end();
         resolve(true);
       });
       socket.on("error", () => resolve(false));
-      socket.setTimeout(500, () => { socket.destroy(); resolve(false); });
+      socket.setTimeout(PROBE_TIMEOUT_MS, () => { socket.destroy(); resolve(false); });
     } else {
       const socket = createSocket("udp4");
       socket.on("error", () => { socket.close(); resolve(false); });
@@ -227,7 +230,7 @@ function checkPort(port: number, type: "tcp" | "udp"): Promise<boolean> {
       // 发送空探测包
       socket.send(Buffer.from("ping"), port, "127.0.0.1", (err) => {
         if (err) { socket.close(); resolve(false); }
-        setTimeout(() => { socket.close(); resolve(false); }, 500);
+        setTimeout(() => { socket.close(); resolve(false); }, PROBE_TIMEOUT_MS);
       });
     }
   });

@@ -87,6 +87,16 @@ const MAX_ENTRIES = 50_000;
 /** 估算每行日志的耗时（ms），用于无时间戳时推算相对时间 */
 const ESTIMATED_MS_PER_LINE = 5;
 
+/** 兜底匹配（非结构化日志）时单条消息的最大保留长度 */
+const MAX_FALLBACK_MESSAGE_LEN = 200;
+
+/** 截断消息并追加省略号（超长时） */
+function truncateMessage(text: string): string {
+  return text.length > MAX_FALLBACK_MESSAGE_LEN
+    ? text.slice(0, MAX_FALLBACK_MESSAGE_LEN) + "..."
+    : text;
+}
+
 // ─── 正则模式 ───
 
 /** Godot 引擎 ERROR 消息：  ERROR: <message> */
@@ -281,7 +291,7 @@ export function ParseLogText(
     if (/error/i.test(trimmed) && !trimmed.startsWith("LOG:")) {
       entries.push({
         level: "error",
-        message: trimmed.length > 200 ? trimmed.slice(0, 200) + "..." : trimmed,
+        message: truncateMessage(trimmed),
         timestamp,
         raw: line,
         category: "engine",
@@ -294,7 +304,7 @@ export function ParseLogText(
     if (source === "stdout") {
       entries.push({
         level: "info",
-        message: trimmed.length > 200 ? trimmed.slice(0, 200) + "..." : trimmed,
+        message: truncateMessage(trimmed),
         timestamp,
         raw: line,
         category: "print",

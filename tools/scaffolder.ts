@@ -45,6 +45,9 @@ const DIR_STRUCTURE = [
 const DEFAULT_RESOLUTION = { width: 1152, height: 648 };
 const DEFAULT_RENDERER = "forward_plus" as const;
 
+/** Godot 渲染分辨率单边上限 */
+const MAX_RESOLUTION_SIDE = 16384;
+
 // ─── 路径安全 ───
 
 /** 防路径穿越：确保 root_path 不含 ../ 且不为驱动器根目录 */
@@ -178,8 +181,8 @@ export async function ScaffoldProject(
   if (res.width < 1 || res.height < 1) {
     return { project_root: "", error: "分辨率必须为正整数" };
   }
-  if (res.width > 16384 || res.height > 16384) {
-    return { project_root: "", error: "分辨率超出 Godot 支持范围（最大 16384）" };
+  if (res.width > MAX_RESOLUTION_SIDE || res.height > MAX_RESOLUTION_SIDE) {
+    return { project_root: "", error: `分辨率超出 Godot 支持范围（最大 ${MAX_RESOLUTION_SIDE}）` };
   }
 
   // ── 检查是否已存在合法项目 ──
