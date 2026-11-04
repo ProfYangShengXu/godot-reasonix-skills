@@ -113,6 +113,10 @@ export interface ListDebugSessionsOutput {
 // ─── 常量 ───
 
 const DEFAULT_DURATION_SEC = 10;
+/** 输入模拟前等待游戏初始化的毫秒数 */
+const GAME_BOOT_WAIT_MS = 2000;
+/** 单个按键模拟耗时估算（秒），用于与总时长对齐 */
+const SEC_PER_KEY_ESTIMATE = 0.1;
 const SESSIONS_DIR = "debug-sessions";
 
 // ─── 辅助函数 ───
@@ -441,7 +445,7 @@ export async function RunDebugSession(
   // 第 2 步：如果有输入脚本，等待游戏启动后模拟输入
   if (sequence && sequence.length > 0) {
     // 等待游戏初始化
-    await sleep(2000);
+    await sleep(GAME_BOOT_WAIT_MS);
 
     const simResult = await SimulateKeySequence({
       keys: sequence,
@@ -454,7 +458,7 @@ export async function RunDebugSession(
   }
 
   // 第 3 步：等待剩余时间
-  const elapsedSec = 2 + (sequence ? sequence.length * 0.1 : 0);
+  const elapsedSec = GAME_BOOT_WAIT_MS / 1000 + (sequence ? sequence.length * SEC_PER_KEY_ESTIMATE : 0);
   const remainingSec = Math.max(0, duration_sec - elapsedSec);
   if (remainingSec > 0) {
     await sleep(remainingSec * 1000);

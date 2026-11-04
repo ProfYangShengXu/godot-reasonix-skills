@@ -146,7 +146,9 @@ function emptySummary(): LogSummary {
 async function main() {
   const args = process.argv.slice(2);
   if (args.length < 1) {
-    console.error("用法: npx tsx tools/log_capture.ts <project_root> [--args <godot_args...>] [--timeout <sec>]");
+    console.error(
+      "用法: npx tsx tools/log_capture.ts <project_root> [--args <godot_args...>] [--timeout <sec>]",
+    );
     process.exit(1);
   }
 
