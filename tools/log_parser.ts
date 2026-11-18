@@ -90,6 +90,15 @@ const ESTIMATED_MS_PER_LINE = 5;
 /** 兜底匹配（非结构化日志）时单条消息的最大保留长度 */
 const MAX_FALLBACK_MESSAGE_LEN = 200;
 
+/** 摘要中高频错误分组保留条数 */
+const MAX_TOP_ERROR_GROUPS = 10;
+
+/** 摘要时间线最多保留的事件点数量 */
+const MAX_TIMELINE_EVENTS = 50;
+
+/** 触发"警告偏多"诊断提示的阈值 */
+const WARNING_HINT_THRESHOLD = 10;
+
 /** 截断消息并追加省略号（超长时） */
 function truncateMessage(text: string): string {
   return text.length > MAX_FALLBACK_MESSAGE_LEN
@@ -361,10 +370,10 @@ export function SummarizeLogs(
     }
   }
 
-  // 按频率排序取前 10
+  // 按频率排序取前 MAX_TOP_ERROR_GROUPS 个
   const topErrors = [...errorMap.values()]
     .sort((a, b) => b.count - a.count)
-    .slice(0, 10);
+    .slice(0, MAX_TOP_ERROR_GROUPS);
 
   // 时间线（采样关键事件：error 和 warning）
   const timeline: Array<{ ms: number; event: string }> = [];
@@ -377,8 +386,8 @@ export function SummarizeLogs(
     }
   }
   // 限制时间线条目数
-  const sampledTimeline = timeline.length > 50
-    ? timeline.filter((_, i) => i % Math.ceil(timeline.length / 50) === 0)
+  const sampledTimeline = timeline.length > MAX_TIMELINE_EVENTS
+    ? timeline.filter((_, i) => i % Math.ceil(timeline.length / MAX_TIMELINE_EVENTS) === 0)
     : timeline;
 
   // 诊断提示
@@ -389,7 +398,7 @@ export function SummarizeLogs(
       diagnosisHints.push(`最频繁的错误位于 ${topErrors[0]!.file}:${topErrors[0]!.line}（${topErrors[0]!.count} 次）`);
     }
   }
-  if (stats.warnings > 10) {
+  if (stats.warnings > WARNING_HINT_THRESHOLD) {
     diagnosisHints.push(`警告数量较多（${stats.warnings} 条），建议检查代码质量`);
   }
   if (stats.total === 0) {

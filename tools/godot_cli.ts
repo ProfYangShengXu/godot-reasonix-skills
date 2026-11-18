@@ -49,6 +49,9 @@ export interface CheckGodotVersionOutput {
 const MINIMUM_MAJOR = 4;
 const DEFAULT_TIMEOUT_SEC = 60;
 
+/** SIGTERM 之后等待进程自行退出的宽限期（ms），超时则 SIGKILL */
+const SIGKILL_GRACE_MS = 2000;
+
 // ─── 查找 godot 可执行文件 ───
 
 /**
@@ -150,10 +153,10 @@ function runProcess(
     const timer = setTimeout(() => {
       killed = true;
       child.kill("SIGTERM");
-      // 如果 SIGTERM 后 2 秒未退出则 SIGKILL
+      // 如果 SIGTERM 后宽限期内未退出则 SIGKILL
       setTimeout(() => {
         try { child.kill("SIGKILL"); } catch { /* 进程已结束 */ }
-      }, 2000);
+      }, SIGKILL_GRACE_MS);
     }, timeoutSec * 1000);
 
     child.on("close", (code) => {
