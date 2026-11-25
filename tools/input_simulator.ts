@@ -172,6 +172,13 @@ function getScriptsDir(): string {
   return join(process.cwd(), SCRIPTS_DIR);
 }
 
+/** 脚本 id 只允许字母/数字/下划线/中划线/点，防止 ../ 逃出 scripts 目录。 */
+const SCRIPT_ID_PATTERN = /^[\w.-]+$/;
+
+function isValidScriptId(scriptId: string): boolean {
+  return SCRIPT_ID_PATTERN.test(scriptId) && !scriptId.includes("..");
+}
+
 function getScriptPath(scriptId: string): string {
   return join(getScriptsDir(), `${scriptId}.json`);
 }
@@ -247,7 +254,11 @@ ${sendKeysCalls.join("\n")}
     });
 
     child.on("close", (code) => {
-      resolve(actions.length);
+      if (code === 0) {
+        resolve(actions.length);
+      } else {
+        reject(new Error(`PowerShell 退出码 ${code}`));
+      }
     });
 
     child.on("error", (err) => {
@@ -276,10 +287,11 @@ async function executeLinux(
       continue;
     }
 
-    // 尝试获取窗口
+    // 尝试获取窗口（转义标题中的引号/反引号/美元符，避免拼进 shell 命令注入）
     let windowOpts = "";
     if (windowTitle) {
-      windowOpts = `--window $(xdotool search --name "${windowTitle}" | tail -1)`;
+      const safeTitle = windowTitle.replace(/["`$\\]/g, "\\$&");
+      windowOpts = `--window $(xdotool search --name "${safeTitle}" | tail -1)`;
     }
 
     try {
@@ -449,6 +461,10 @@ export async function CreateInputScript(
     return { script_id: "", error: "脚本名称不能为空" };
   }
 
+  if (!isValidScriptId(input.name.trim())) {
+    return { script_id: "", error: "脚本名称只能包含字母、数字、下划线、中划线和点" };
+  }
+
   if (!input.sequence || input.sequence.length === 0) {
     return { script_id: "", error: "按键序列不能为空" };
   }
@@ -478,6 +494,10 @@ export async function CreateInputScript(
 export async function ReplayInputScript(
   input: ReplayInputScriptInput,
 ): Promise<ReplayInputScriptOutput> {
+  if (!isValidScriptId(input.script_id)) {
+    return { executed_actions: 0, error: "无效的脚本 id" };
+  }
+
   const scriptPath = getScriptPath(input.script_id);
 
   try {
